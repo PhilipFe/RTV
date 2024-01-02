@@ -1,0 +1,249 @@
+/*#region global*/
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+@font-face {
+    font-family: Montserrat;
+    src: url("../res/Montserrat-Regular.ttf");
+}
+
+:root {
+    --color_background: #646472;
+    --color_foreground: #EEEEEE;
+    --color_foreground_inactive: #BBBBBB;
+    --color_selection: #AAAAAA;
+    --color_accent: #88d9ff;
+    --font_size: 1.2em;
+}
+
+body {
+    background: var(--color_background);
+    color: var(--color_foreground);
+    font-family: Montserrat;
+}
+
+a {
+    color: var(--color_accent);
+}
+
+::selection {
+    background: var(--color_selection);
+  }
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/*#endregion*/
+
+
+/*#region utility*/
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+.aligned_left {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.aligned_center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.aligned_right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+
+.active {
+    color: var(--color_background);
+}
+
+.inactive {
+    color: var(--color_foreground_inactive);
+}
+
+
+.cohesive {
+    margin-bottom: -0.4em;
+}
+
+.italic {
+    font-style: italic;
+}
+
+.bold {
+    font-weight: bolder;
+}
+
+.space {
+    width: 100%;
+    margin: 0px;
+    height: 1px;
+    margin: 0em;
+    padding: 0em;
+    background: var(--color_background);
+    border-top: 0.1em solid var(--color_foreground);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/*#endregion*/
+
+
+/*#region main*/
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+html,
+body {
+    height: 99%; /* prevent overflow slider due to inaccuracies */
+}
+
+header {
+    height: 5%;
+    width: 100%;
+}
+
+.app {
+    display: flex;
+    height: 90%;
+    width: 100%;
+    border: 0.1em solid var(--color_foreground);
+    border-top-left-radius: 1em;
+}
+
+footer {
+    float: right;
+    height: 5%;
+    width: 100%;
+}
+
+.surface > canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.ui {
+    height: 100%;
+    min-width: 25em;
+    max-width: 50em;
+    width: 30%;
+    border-right: 0.1em solid var(--color_foreground);
+    overflow-y: auto;
+}
+
+/*#endregion*/
+
+
+/*#region UI*/
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/* general */
+
+.ui > div {
+    width: 98%;
+    margin-left: 1%;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+.ui > div > h3 {
+    font-size: 1.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ui > div > label {
+    font-size: var(--font_size);
+}
+
+.ui > div > label:hover, .ui > div > h3:hover {
+    color: var(--color_accent);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* slider */
+
+.ui > div > input[type="range"] {
+    accent-color: var(--color_accent);
+    float: right;
+    width: 60%;
+    /* if we want full control over this: https://codepen.io/ShadowShahriar/pen/zYPPYrQ */
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* dropdown */
+
+.ui > div > select {
+    width: 100%;
+    height: 1.667em;
+    background: var(--color_background);
+    color: var(--color_foreground);
+    border: 1px solid var(--color_foreground);
+    border-radius: 0.2em;
+    border-color: var(--color_foreground_inactive);
+    font-size: var(--font_size);
+    transition: 0.25s;
+}
+
+.ui > div > select:hover {
+    border-color: var(--color_foreground);
+}
+
+.ui > div > select > option {
+    text-align: center;
+    font-size: var(--font_size);
+    /* hover color seems really hard to change since this elements are rendered by the OS. webdev is such a shitshow .. */
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* checkbox */
+
+.ui > div > input[type="checkbox"] {
+    appearance: none;
+    float: right;
+    width: 1.2em;
+    height: 1.2em;
+    border-radius: 1em;
+    border: 0.1em solid var(--color_foreground_inactive);
+    background-color: var(--color_background);
+    content: "";
+    margin-left: 1em;
+}
+
+.ui > div > input[type="checkbox"]:hover {
+    border-color: var(--color_foreground);
+}
+
+.ui > div > input[type="checkbox"]:checked {
+    box-shadow: inset 0 0 0 0.25em var(--color_background);
+    background-color: var(--color_accent);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* button */
+
+.ui > div > input[type="button"] {
+    width: 100%;
+    border: 1px solid var(--color_foreground_inactive);
+    border-radius: 0.2em;
+    padding: 0.2em;
+    background: var(--color_background);
+    color: var(--color_foreground);
+    transition: 0.25s;
+    font-size: 1.2em;
+    margin: auto;
+    font-size: var(--font_size);
+}
+
+.ui > div > input[type="button"]:hover {
+    background: var(--color_secondary);
+    color: var(--color_accent);
+    border: 1px solid var(--color_foreground);
+    cursor: pointer;
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+
+/*#endregion*/

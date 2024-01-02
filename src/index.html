@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>"RTV"</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+    <script src="code.js"></script>
+</head>
+
+<body onload="init()">
+    <header class="aligned_left">
+        <h1>3D Mandelbulb</h1>
+    </header>
+
+    <div class="app">
+        <div class="ui">
+            <div>
+                <h3>Settings</h3>
+            </div>
+            <div class="space"></div>
+
+            <!-- #region examples -->
+            <div>
+                <select> 
+                    <option value="">...</option>
+                    <option value="">...</option>
+                    <option value="">...</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="range_asdf">Range Input</label>
+                <input type="range" id="range_asdf" min="0" max="100" value="50">
+            </div>
+
+            <div>
+                <label for="bool_asdf">Bool Input</label>
+                <input type="checkbox" id="bool_asdf" name="bool_asdf_name" value="0"/>
+                <div style="clear: both;"></div>
+                
+            </div>
+
+            <div>
+                <input type="button" value="Button" onclick="document.getElementById('button_helper').click();" />
+                <input type="file" style="display:none;" id="button_helper"/>
+            </div>
+            <!-- #endregion -->
+
+        </div>
+
+        <div class="surface">
+            <canvas id="webgpu-surface"></canvas>
+        </div>
+    </div>
+
+    <footer class="aligned_right">
+        <h3>by Katharina Scheucher & Philip Ferenz</h3>
+    </footer>
+</body>
+</html>
