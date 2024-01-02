@@ -1,8 +1,8 @@
 const triangle_vert = `
 
 struct VertexOutput {
-  @builtin(position) position : vec4<f32>,
-  @location(0) vertex_color : vec3<f32>,
+    @builtin(position) position : vec4<f32>,
+    @location(0) vertex_color : vec3<f32>,
 }
 
 @vertex
@@ -12,4 +12,5 @@ fn main(@builtin(vertex_index) VertexIndex : u32) -> VertexOutput {
     output.vertex_color = vec3<f32>(f32(VertexIndex == 0), f32(VertexIndex & 1), f32(VertexIndex & 2));
     return output;
 }
+
 `

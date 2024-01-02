@@ -56,7 +56,7 @@ a {
 
 
 .active {
-    color: var(--color_background);
+    color: var(--color_foreground);
 }
 
 .inactive {
