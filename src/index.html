@@ -3,11 +3,13 @@
 <head>
     <title>"RTV"</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="shaders/triangle.vert.wgsl.js"></script>
+    <script src="shaders/triangle.frag.wgsl.js"></script>
     <script src="code.js"></script>
 </head>
 
-<body onload="init()">
+<body onload="init();">
     <header class="aligned_left">
         <h1>3D Mandelbulb</h1>
     </header>
@@ -48,8 +50,8 @@
 
         </div>
 
-        <div class="surface">
-            <canvas id="webgpu-surface"></canvas>
+        <div>
+            <canvas id="surface"></canvas>
         </div>
     </div>
 
