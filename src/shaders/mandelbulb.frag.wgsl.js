@@ -1,7 +1,32 @@
 const bulb_frag = `
 
-fn sphereDistanceEstimator(pos: vec3<f32>, radius: f32) -> f32 {
-    return length(pos) - radius;
+// later replace with mandelbulb
+fn sphereDistanceEstimator(pos: vec3<f32>,center: vec3<f32>, radius: f32) -> f32 {
+    return length(pos - center) - radius;
+}
+
+fn ray_marching(rayOrigin: vec3<f32>, rayDir: vec3<f32>) -> vec3<f32> {
+    var total_distance_traveld = 0.0;
+    const NUM_STEPS = 32;
+    const MIN_HIT_DIST = 0.001;
+    const MAX_TRACE_DIST = 1000.0;
+
+    for(var i = 0; i < NUM_STEPS; i++) {
+        var current_pos = rayOrigin + total_distance_traveld * rayDir;
+        var distance = sphereDistanceEstimator(current_pos, vec3<f32>(-1.2, 1.7, 0.5), 0.2);
+
+        if(distance < MIN_HIT_DIST) {
+            return vec3<f32>(1.0, 0.0, 0.0); //hit: red (autsch)
+        }
+
+        if(total_distance_traveld > MAX_TRACE_DIST) {
+            break;
+        }
+
+        total_distance_traveld += distance;
+    }
+
+    return vec3<f32>(0.2);
 }
 
 @fragment
@@ -19,26 +44,16 @@ fn main(@builtin(position) fragCoord : vec4<f32>) -> @location(0) vec4<f32> {
     //return vec4<f32>((ndcX + 1.0) / 2.0, (ndcY + 1.0) / 2.0, 0.0, 1.0);
 
     //return vec4<f32>(ndcX, ndcY, 0.0, 1.0);
-    // Calculate ray direction
-    let rayOrigin = vec3<f32>(0.0, 0.0, -2.0); // Camera position
-    let rayDir = normalize(vec3<f32>(ndcX * aspectRatio + 0.1, ndcY + 0.1, 2.3)); 
+
+    //static camera setup:
+    let rayOrigin = vec3<f32>(0.0, 0.0, 2.5); // Camera position
+    let rayDir = normalize(vec3<f32>(ndcX * aspectRatio, ndcY, -1.0)); 
 
     //return vec4<f32>(rayDir, 1.0);
     //return vec4<f32>((rayDir * 0.5) + 0.5, 1.0); // Normalize and visualize the ray direction
-    var t = 0.0;
 
-    for(var i = 0; i < 100; i++) {
-        let p = rayOrigin + t * rayDir;
-        let dist = sphereDistanceEstimator(p, 0.8);
-        if(dist < 0.001) {
-            return vec4<f32>(t / 5.0, 0.0, 0.0, 1.0); // hit: red
-        }
-
-        t += dist;
-    }
-
-    // output as color
-    return vec4<f32>(0.0, 0.0, 1.0, 1.0); // miss: black*/
+    var color = ray_marching(rayOrigin, rayDir);
+    return vec4<f32>(color, 1.0);
 }
 
 `
