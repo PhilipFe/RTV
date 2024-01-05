@@ -174,15 +174,17 @@ async function init_webgpu() {
 //----------------------------------------------------------------------------------------------------------------------
 
 function setup_uniforms() {
-    // vec4,vec4,
-    uniforms = new Float32Array(8); 
+    // vec4,vec4,vec4,vec4
+    uniforms = new Float32Array(16); 
 
     update_uniforms();
 }
 
 function update_uniforms() {
     uniforms.set(camera.position(), 0);
-    uniforms.set(camera.forward(), 4);
+    uniforms.set(camera.right(), 4);
+    uniforms.set(camera.up(), 8);
+    uniforms.set(camera.forward(), 12);
 }
 
 

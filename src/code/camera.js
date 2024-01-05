@@ -92,6 +92,14 @@ class Camera {
         return this.#pos;
     }
 
+    right() {
+        return this.#right;
+    }
+
+    up() {
+        return this.#up;
+    }
+
     forward() {
         return this.#forward;
     }

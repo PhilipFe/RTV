@@ -2,7 +2,9 @@ const sphere_frag = `
 
 struct Uniforms {
     eye: vec4<f32>,
-    dir: vec4<f32>,
+    right: vec4<f32>,
+    up: vec4<f32>,
+    forward: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: Uniforms;
 
@@ -19,7 +21,7 @@ fn ray_marching(rayOrigin: vec3<f32>, rayDir: vec3<f32>) -> vec3<f32> {
 
     for(var i = 0; i < NUM_STEPS; i++) {
         var current_pos = rayOrigin + total_distance_traveld * rayDir;
-        var distance = sphereDistanceEstimator(current_pos, vec3<f32>(-1.2, 1.7, 0.5), 0.2);
+        var distance = sphereDistanceEstimator(current_pos, vec3<f32>(0, 0, 0), 0.2);
 
         if(distance < MIN_HIT_DIST) {
             return vec3<f32>(1.0, 0.0, 0.0); //hit: red (autsch? ouch! )
@@ -40,7 +42,7 @@ fn main(
     @location(0) uv : vec2<f32>
 ) -> @location(0) vec4<f32> {
     var rayOrigin = u.eye.xyz;
-    var rayDir = normalize(u.dir.xyz + vec3<f32>(uv.x/2, 1.0, uv.y/2)); 
+    var rayDir = normalize(u.forward.xyz + (u.right.xyz * uv.x) + (u.up.xyz * uv.y)); 
 
     var color = ray_marching(rayOrigin, rayDir);
     return vec4<f32>(color, 1.0);
