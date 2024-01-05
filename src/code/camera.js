@@ -36,8 +36,8 @@ class Camera {
         this.#up = vec3.create();
         this.#forward = vec3.create();
         
-        this.#pos = vec3.create(0, -4, 0);
-        this.#rot = vec3.create(-90, 0, 0);
+        this.#pos = vec3.create(0, -1, 0);
+        this.#rot = vec3.create(-90, 0, 180);
         
         this.#p = mat4.perspective(degToRad(this.#fov), width/height, this.#znear, this.#zfar);
         this.#v = mat4.create();
@@ -73,7 +73,7 @@ class Camera {
 
         // rotation
         this.#rot[2] += input['x'] * this.#sens;
-        this.#rot[0] += input['y'] * this.#sens;
+        this.#rot[0] -= input['y'] * this.#sens;
         this.#rot[0] = Math.min(Math.max(this.#rot[0], -179.0), 0.0);
 
         this.#reconstruct();
@@ -110,8 +110,8 @@ class Camera {
     #reconstruct() {
         // view matrix (fuck lookat: https://stannum.io/blog/0UaG8R)
         mat4.identity(this.#v);
-        mat4.rotate(this.#v, this.#world_right, degToRad(this.#rot[0]), this.#v);
-        mat4.rotate(this.#v, this.#world_up, degToRad(this.#rot[2]), this.#v);
+        mat4.rotate(this.#v, this.#world_right, degToRad(-this.#rot[0]), this.#v);
+        mat4.rotate(this.#v, this.#world_up, degToRad(-this.#rot[2]), this.#v);
         mat4.translate(this.#v, vec3.mulScalar(this.#pos, -1), this.#v);
         
         // camera coordinate system from view matrix

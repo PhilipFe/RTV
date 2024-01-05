@@ -30,7 +30,6 @@ let uniforms;
 //#region main
 //----------------------------------------------------------------------------------------------------------------------
 
-
 // mainloop
 function run() {
     let now = performance.now();
@@ -62,6 +61,7 @@ function draw() {
     renderpass_descriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
     const commandEncoder = device.createCommandEncoder();
     const renderpass = commandEncoder.beginRenderPass(renderpass_descriptor);
+    renderpass.setViewport(0, 0, surface.width, surface.height, 0, 1);
     renderpass.setPipeline(pipeline);
     renderpass.setBindGroup(0, pipeline_bindgroup);
     renderpass.draw(3);
@@ -181,7 +181,9 @@ function setup_uniforms() {
 }
 
 function update_uniforms() {
-    uniforms.set(camera.position(), 0);
+    let eye = camera.position();
+    let aspectRatio = surface.clientWidth/surface.clientHeight;
+    uniforms.set(vec4.fromValues(eye[0], eye[1], eye[2], aspectRatio), 0);
     uniforms.set(camera.right(), 4);
     uniforms.set(camera.up(), 8);
     uniforms.set(camera.forward(), 12);
