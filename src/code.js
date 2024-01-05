@@ -133,17 +133,6 @@ async function init_webgpu() {
         primitive: {
             topology: 'triangle-list',
         },
-        depthStencil: { // todo: I dont think we need this ..
-            depthWriteEnabled: true,
-            depthCompare: 'less',
-            format: 'depth24plus',
-        },
-    });
-
-    const depthTexture = device.createTexture({ // todo: I dont think we need this ..
-        size: [surface.width, surface.height],
-        format: 'depth24plus',
-        usage: GPUTextureUsage.RENDER_ATTACHMENT,
     });
 
     // uniforms
@@ -172,12 +161,6 @@ async function init_webgpu() {
             loadOp: 'clear',
             storeOp: 'store',
         }],
-        depthStencilAttachment: { // todo: I dont think we need this ..
-            view: depthTexture.createView(),
-            depthClearValue: 1.0,
-            depthLoadOp: 'clear',
-            depthStoreOp: 'store',
-          },
     };
 
 

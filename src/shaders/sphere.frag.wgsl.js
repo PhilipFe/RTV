@@ -40,7 +40,7 @@ fn main(
     @location(0) uv : vec2<f32>
 ) -> @location(0) vec4<f32> {
     var rayOrigin = u.eye.xyz;
-    var rayDir = normalize(u.dir.xyz + vec3<f32>(uv.x, 1.0, uv.y)); 
+    var rayDir = normalize(u.dir.xyz + vec3<f32>(uv.x/2, 1.0, uv.y/2)); 
 
     var color = ray_marching(rayOrigin, rayDir);
     return vec4<f32>(color, 1.0);
