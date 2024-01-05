@@ -1,105 +1,253 @@
+
+//#region vars
+//----------------------------------------------------------------------------------------------------------------------
+
+// webgpu
+let adapter;
+let device;
+let context;
+let swapchain_format;
+
+let renderpass_descriptor;
+let vertex_buffer;
+let pipeline;
+let uniform_buffer;
+let pipeline_bind_group;
+
+// aux
+let ts;
+let dt;
+let camera_enabled = false;
+
+// other
+let surface;
+let input = {};
+let camera;
+let uniforms;
+
+//----------------------------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region main
+//----------------------------------------------------------------------------------------------------------------------
+
+
+// mainloop
+function run() {
+    let now = performance.now();
+    dt = (now - ts)/1000;
+    ts = now;
+    
+    update();
+    draw(device, context, pipeline);
+
+    requestAnimationFrame(run);
+}
+
+// logic
+function update() {
+    // input
+    if(camera_enabled) {
+        camera.update(dt, input);
+    }
+    reset_mouse_accumulation();
+
+    // uniforms
+    uniforms.set(camera.pv(), 0);
+}
+
+// graphics
+function draw() {
+    // uniforms | cpu -> gpu
+    device.queue.writeBuffer(uniform_buffer, 0, uniforms);
+
+    // drawing
+    renderpass_descriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
+    const commandEncoder = device.createCommandEncoder();
+    const renderpass = commandEncoder.beginRenderPass(renderpass_descriptor);
+    renderpass.setPipeline(pipeline);
+    renderpass.setBindGroup(0, pipeline_bind_group);
+    renderpass.setVertexBuffer(0, vertex_buffer);
+    renderpass.draw(cubeVertexCount);
+    renderpass.end();
+    device.queue.submit([commandEncoder.finish()]);
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//#endregion
+
 //#region init
 //----------------------------------------------------------------------------------------------------------------------
 
 function init() {
-    init_webgpu().then(() => {console.log("webgpu initialized!");});
+    // aux
+    ts = performance.now();
+    surface = document.getElementById('surface');
+    
+    // other
+    camera = new Camera(surface.width, surface.height);
+    uniforms = new Float32Array(16); // mat4,
+    uniforms.set(camera.pv(), 0);
+    reset_mouse_accumulation();
+    
+    // events
+    surface.addEventListener('resize', surface_resized);
+    surface.addEventListener('mousemove', surface_mousemove);
+    surface.addEventListener('mousedown', surface_mousedown);
+    document.addEventListener('keydown', keydown);
+    document.addEventListener('keyup', keyup);
+    
+    // webgpu
+    surface_resized();
+    init_webgpu().then(() => {
+        console.log('webgpu initialized!');
+    });
 }
 
-async function init_webgpu() {
-    const adapter = await navigator.gpu.requestAdapter();
-    const device = await adapter.requestDevice();
-    const context = document.getElementById('surface').getContext('webgpu');
-    const swapChainFormat = navigator.gpu.getPreferredCanvasFormat();
 
+async function init_webgpu() {
+    adapter = await navigator.gpu.requestAdapter();
+    device = await adapter.requestDevice();
+    context = surface.getContext('webgpu');
+    swapchain_format = navigator.gpu.getPreferredCanvasFormat();
+    
     context.configure({
         device,
-        format: swapChainFormat,
+        format: swapchain_format,
+        alphaMode: 'premultiplied',
     });
 
-    // init camera
-    /*const camera = new ArcballCamera({position: [0, 0, 5]});
-
-    const cameraBuffer = device.createBuffer({
-        size: 64, 
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    })
-
-    const cameraBindGroupLayout = device.createBindGroupLayout({
-        entries: [{
-            binding: 0,
-            visibility: GPUShaderStage.FRAGMENT,
-            buffer: { type: 'uniform' },
-        }],
+    // pipeline
+    vertex_buffer = device.createBuffer({
+        size: cube_vertices.byteLength,
+        usage: GPUBufferUsage.VERTEX,
+        mappedAtCreation: true,
     });
-    
-    const cameraBindGroup = device.createBindGroup({
-        layout: cameraBindGroupLayout,
-        entries: [{
-            binding: 0,
-            resource: {
-                buffer: cameraBuffer,
-            },
-        }],
-    });*/
+    new Float32Array(vertex_buffer.getMappedRange()).set(cube_vertices);
+    vertex_buffer.unmap();
 
-    const canvas = document.getElementById('surface');
-    const canvasWidth = canvas.clientWidth;
-    const canvasHeight = canvas.clientHeight;
-
-    console.log("width: " + canvasWidth);
-    console.log("height: " + canvasHeight);
-
-    const pipeline = device.createRenderPipeline({
+    pipeline = device.createRenderPipeline({
         layout: 'auto',
         vertex: {
             module: device.createShaderModule({
-                code: bulb_vert,
+                code: cube_vert,
             }),
             entryPoint: 'main',
+            buffers: [
+                {
+                    arrayStride: cubeVertexSize,
+                    attributes: [
+                        {
+                            shaderLocation: 0,
+                            offset: cubePositionOffset,
+                            format: 'float32x4',
+                        },
+                        {
+                            shaderLocation: 1,
+                            offset: cubeUVOffset,
+                            format: 'float32x2',
+                        },
+                    ],
+                },
+            ],
         },
         fragment: {
             module: device.createShaderModule({
-                code: bulb_frag,
+                code: cube_frag,
             }),
             entryPoint: 'main',
             targets: [{
-                format: swapChainFormat,
+                format: swapchain_format,
             }],
         },
         primitive: {
             topology: 'triangle-list',
+            cullMode: 'back',
         },
+        depthStencil: {
+            depthWriteEnabled: true,
+            depthCompare: 'less',
+            format: 'depth24plus',
+          },
     });
 
-    function frame() {
-        // udpate camera
-        //device.queue.writeBuffer(cameraBuffer, 0, camera.view);
+    const depthTexture = device.createTexture({
+        size: [surface.width, surface.height],
+        format: 'depth24plus',
+        usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    });
 
-        const commandEncoder = device.createCommandEncoder();
-        const textureView = context.getCurrentTexture().createView();
-    
-        const renderPassDescriptor = {
-            colorAttachments: [{
-                view: textureView,
-                clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-                loadOp: 'clear',
-                storeOp: 'store',
-            }],
-        };
-    
-        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        passEncoder.setPipeline(pipeline);
-        //passEncoder.setBindGroup(0, cameraBindGroup);
-        passEncoder.draw(3);
-        passEncoder.end();
-    
-        device.queue.submit([commandEncoder.finish()]);
-        requestAnimationFrame(frame);
-    }
+    // uniforms
+    uniform_buffer = device.createBuffer({
+        size: uniforms.byteLength, 
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
 
-    requestAnimationFrame(frame);
+    pipeline_bind_group = device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [
+            { binding: 0, resource: { buffer: uniform_buffer }},
+        ],
+    });
+
+    // renderpass
+    renderpass_descriptor = {
+        colorAttachments: [{
+            view: undefined,
+            clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+            loadOp: 'clear',
+            storeOp: 'store',
+        }],
+        depthStencilAttachment: {
+            view: depthTexture.createView(),
+            depthClearValue: 1.0,
+            depthLoadOp: 'clear',
+            depthStoreOp: 'store',
+          },
+    };
+
+
+    requestAnimationFrame(run);
 }
 
-window.onload = init;
+//----------------------------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region aux
+//----------------------------------------------------------------------------------------------------------------------
+
+function reset_mouse_accumulation() {
+    input['x'] = 0;
+    input['y'] = 0;
+}
+
+function surface_resized() {
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    surface.width = surface.clientWidth * devicePixelRatio;
+    surface.height = surface.clientHeight * devicePixelRatio;
+    camera.resized(surface.width, surface.height);
+}
+
+function surface_mousemove(e) {
+    input['x'] += e.movementX;
+    input['y'] += e.movementY;
+}
+
+function surface_mousedown() {
+    camera_enabled = !camera_enabled;
+    if(camera_enabled) {
+        surface.requestPointerLock();
+    } else {
+        document.exitPointerLock();
+    }
+}
+
+function keydown(e) {
+    input[e.code] = true;
+}
+function keyup(e) {
+    input[e.code] = false;
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
