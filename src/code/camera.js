@@ -88,6 +88,14 @@ class Camera {
         return this.#pv;
     }
 
+    position() {
+        return this.#pos;
+    }
+
+    forward() {
+        return this.#forward;
+    }
+
     /**
      * Calculates the view matrix and the camera coordinate system using position and rotation of the camera
      */

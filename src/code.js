@@ -9,10 +9,9 @@ let context;
 let swapchain_format;
 
 let renderpass_descriptor;
-let vertex_buffer;
 let pipeline;
 let uniform_buffer;
-let pipeline_bind_group;
+let pipeline_bindgroup;
 
 // aux
 let ts;
@@ -51,9 +50,7 @@ function update() {
         camera.update(dt, input);
     }
     reset_mouse_accumulation();
-
-    // uniforms
-    uniforms.set(camera.pv(), 0);
+    update_uniforms();
 }
 
 // graphics
@@ -66,9 +63,8 @@ function draw() {
     const commandEncoder = device.createCommandEncoder();
     const renderpass = commandEncoder.beginRenderPass(renderpass_descriptor);
     renderpass.setPipeline(pipeline);
-    renderpass.setBindGroup(0, pipeline_bind_group);
-    renderpass.setVertexBuffer(0, vertex_buffer);
-    renderpass.draw(cubeVertexCount);
+    renderpass.setBindGroup(0, pipeline_bindgroup);
+    renderpass.draw(3);
     renderpass.end();
     device.queue.submit([commandEncoder.finish()]);
 }
@@ -86,9 +82,8 @@ function init() {
     
     // other
     camera = new Camera(surface.width, surface.height);
-    uniforms = new Float32Array(16); // mat4,
-    uniforms.set(camera.pv(), 0);
     reset_mouse_accumulation();
+    setup_uniforms();
     
     // events
     surface.addEventListener('resize', surface_resized);
@@ -118,42 +113,17 @@ async function init_webgpu() {
     });
 
     // pipeline
-    vertex_buffer = device.createBuffer({
-        size: cube_vertices.byteLength,
-        usage: GPUBufferUsage.VERTEX,
-        mappedAtCreation: true,
-    });
-    new Float32Array(vertex_buffer.getMappedRange()).set(cube_vertices);
-    vertex_buffer.unmap();
-
     pipeline = device.createRenderPipeline({
         layout: 'auto',
         vertex: {
             module: device.createShaderModule({
-                code: cube_vert,
+                code: sphere_vert,
             }),
             entryPoint: 'main',
-            buffers: [
-                {
-                    arrayStride: cubeVertexSize,
-                    attributes: [
-                        {
-                            shaderLocation: 0,
-                            offset: cubePositionOffset,
-                            format: 'float32x4',
-                        },
-                        {
-                            shaderLocation: 1,
-                            offset: cubeUVOffset,
-                            format: 'float32x2',
-                        },
-                    ],
-                },
-            ],
         },
         fragment: {
             module: device.createShaderModule({
-                code: cube_frag,
+                code: sphere_frag,
             }),
             entryPoint: 'main',
             targets: [{
@@ -162,16 +132,15 @@ async function init_webgpu() {
         },
         primitive: {
             topology: 'triangle-list',
-            cullMode: 'back',
         },
-        depthStencil: {
+        depthStencil: { // todo: I dont think we need this ..
             depthWriteEnabled: true,
             depthCompare: 'less',
             format: 'depth24plus',
-          },
+        },
     });
 
-    const depthTexture = device.createTexture({
+    const depthTexture = device.createTexture({ // todo: I dont think we need this ..
         size: [surface.width, surface.height],
         format: 'depth24plus',
         usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -183,10 +152,15 @@ async function init_webgpu() {
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
-    pipeline_bind_group = device.createBindGroup({
+    pipeline_bindgroup = device.createBindGroup({
         layout: pipeline.getBindGroupLayout(0),
         entries: [
-            { binding: 0, resource: { buffer: uniform_buffer }},
+            { 
+                binding: 0, 
+                resource: { 
+                    buffer: uniform_buffer 
+                }
+            },
         ],
     });
 
@@ -198,7 +172,7 @@ async function init_webgpu() {
             loadOp: 'clear',
             storeOp: 'store',
         }],
-        depthStencilAttachment: {
+        depthStencilAttachment: { // todo: I dont think we need this ..
             view: depthTexture.createView(),
             depthClearValue: 1.0,
             depthLoadOp: 'clear',
@@ -216,10 +190,24 @@ async function init_webgpu() {
 //#region aux
 //----------------------------------------------------------------------------------------------------------------------
 
+function setup_uniforms() {
+    // vec4,vec4,
+    uniforms = new Float32Array(8); 
+
+    update_uniforms();
+}
+
+function update_uniforms() {
+    uniforms.set(camera.position(), 0);
+    uniforms.set(camera.forward(), 4);
+}
+
+
 function reset_mouse_accumulation() {
     input['x'] = 0;
     input['y'] = 0;
 }
+
 
 function surface_resized() {
     const devicePixelRatio = window.devicePixelRatio || 1;
@@ -241,6 +229,7 @@ function surface_mousedown() {
         document.exitPointerLock();
     }
 }
+
 
 function keydown(e) {
     input[e.code] = true;
