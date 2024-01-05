@@ -16,18 +16,50 @@ async function init_webgpu() {
         format: swapChainFormat,
     });
 
+    // init camera
+    /*const camera = new ArcballCamera({position: [0, 0, 5]});
+
+    const cameraBuffer = device.createBuffer({
+        size: 64, 
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    })
+
+    const cameraBindGroupLayout = device.createBindGroupLayout({
+        entries: [{
+            binding: 0,
+            visibility: GPUShaderStage.FRAGMENT,
+            buffer: { type: 'uniform' },
+        }],
+    });
     
+    const cameraBindGroup = device.createBindGroup({
+        layout: cameraBindGroupLayout,
+        entries: [{
+            binding: 0,
+            resource: {
+                buffer: cameraBuffer,
+            },
+        }],
+    });*/
+
+    const canvas = document.getElementById('surface');
+    const canvasWidth = canvas.clientWidth;
+    const canvasHeight = canvas.clientHeight;
+
+    console.log("width: " + canvasWidth);
+    console.log("height: " + canvasHeight);
+
     const pipeline = device.createRenderPipeline({
         layout: 'auto',
         vertex: {
             module: device.createShaderModule({
-                code: triangle_vert,
+                code: bulb_vert,
             }),
             entryPoint: 'main',
         },
         fragment: {
             module: device.createShaderModule({
-                code: triangle_frag,
+                code: bulb_frag,
             }),
             entryPoint: 'main',
             targets: [{
@@ -40,6 +72,9 @@ async function init_webgpu() {
     });
 
     function frame() {
+        // udpate camera
+        //device.queue.writeBuffer(cameraBuffer, 0, camera.view);
+
         const commandEncoder = device.createCommandEncoder();
         const textureView = context.getCurrentTexture().createView();
     
@@ -54,6 +89,7 @@ async function init_webgpu() {
     
         const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         passEncoder.setPipeline(pipeline);
+        //passEncoder.setBindGroup(0, cameraBindGroup);
         passEncoder.draw(3);
         passEncoder.end();
     
@@ -64,5 +100,6 @@ async function init_webgpu() {
     requestAnimationFrame(frame);
 }
 
+window.onload = init;
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
