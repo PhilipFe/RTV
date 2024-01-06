@@ -126,7 +126,7 @@ footer {
 .ui {
     height: 100%;
     min-width: 25em;
-    max-width: 50em;
+    max-width: 35em;
     width: 30%;
     border-right: 0.1em solid var(--color_foreground);
     overflow-y: auto;

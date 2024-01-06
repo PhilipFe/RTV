@@ -8,33 +8,40 @@ struct Uniforms {
 };
 @group(0) @binding(0) var<uniform> u: Uniforms;
 
-// later replace with mandelbulb
-fn sphereDistanceEstimator(pos: vec3<f32>, center: vec3<f32>, radius: f32) -> f32 {
-    return length(pos - center) - radius;
+//--------------------------------------------------------------------------------------------------------------------
+
+const NUM_STEPS = 32;
+const MAX_DIST = 1000.0;
+const MIN_DIST = 0.01;
+const light_pos = vec3<f32>(0, -3, -3);
+const intensity = 0.6;
+const ambient = 0.1;
+const sphere = vec4<f32>(0, 0, 0, 0.2);
+
+//--------------------------------------------------------------------------------------------------------------------
+
+fn get_distance(pos: vec3<f32>) -> f32 {
+    return length(pos - sphere.xyz) - sphere.w;
 }
 
-fn ray_marching(rayOrigin: vec3<f32>, rayDir: vec3<f32>) -> vec3<f32> {
-    var total_distance_traveld = 0.0;
-    const NUM_STEPS = 32;
-    const MIN_HIT_DIST = 0.001;
-    const MAX_TRACE_DIST = 1000.0;
-
+fn ray_march(ray_origin: vec3<f32>, ray_dir: vec3<f32>) -> f32 {
+    var d = 0.0;
     for(var i = 0; i < NUM_STEPS; i++) {
-        var current_pos = rayOrigin + total_distance_traveld * rayDir;
-        var distance = sphereDistanceEstimator(current_pos, vec3<f32>(0, 0, 0), 0.2);
-
-        if(distance < MIN_HIT_DIST) {
-            return vec3<f32>(1.0, 0.0, 0.0); //hit: red (autsch? ouch! )
-        }
-
-        if(total_distance_traveld > MAX_TRACE_DIST) {
+        var pos = ray_origin + ray_dir * d;
+        var distance = get_distance(pos);
+        d += distance;
+        if(d > MAX_DIST || distance < MIN_DIST) {
             break;
         }
-
-        total_distance_traveld += distance;
     }
+    return d;
+}
 
-    return vec3<f32>(0.2);
+fn get_light(pos: vec3<f32>) -> f32 {
+    var l = normalize(light_pos - pos);
+    var n = normalize(pos - sphere.xyz);
+    var light = clamp(dot(l, n) * intensity, 0, 1);
+    return light;
 }
 
 @fragment
@@ -44,8 +51,14 @@ fn main(
     var rayOrigin = u.eye.xyz;
     var rayDir = normalize(u.forward.xyz + (u.right.xyz * uv.x/2 * u.eye.w) + (u.up.xyz * uv.y/2)); 
 
-    var color = ray_marching(rayOrigin, rayDir);
-    return vec4<f32>(color, 1.0);
+    var d = ray_march(rayOrigin, rayDir);
+    if(d > MAX_DIST) {
+        return vec4<f32>(vec3<f32>(0), 1);
+    }
+
+    var pos = rayOrigin + rayDir * d;
+    var diffuse = get_light(pos);
+    return vec4<f32>(vec3<f32>(ambient + diffuse), 1.0);
 }
 
 `
