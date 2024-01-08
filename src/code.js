@@ -117,13 +117,13 @@ async function init_webgpu() {
         layout: 'auto',
         vertex: {
             module: device.createShaderModule({
-                code: sphere_vert,
+                code: bulb_vert,
             }),
             entryPoint: 'main',
         },
         fragment: {
             module: device.createShaderModule({
-                code: sphere_frag,
+                code: bulb_frag,
             }),
             entryPoint: 'main',
             targets: [{

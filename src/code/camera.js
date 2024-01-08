@@ -36,7 +36,7 @@ class Camera {
         this.#up = vec3.create();
         this.#forward = vec3.create();
         
-        this.#pos = vec3.create(0, -1, 0);
+        this.#pos = vec3.create(0, -4, 0);
         this.#rot = vec3.create(-90, 0, 180);
         
         this.#p = mat4.perspective(degToRad(this.#fov), width/height, this.#znear, this.#zfar);
