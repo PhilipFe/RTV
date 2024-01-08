@@ -24,6 +24,13 @@ const MAX_ITERATIONS = 8; // changes shape
 const POWER = 12; // adds detail
 const BAILOUT = 2.0;
 
+// phong shading
+const PHONG_COLOR = vec3<f32>(1, 1, 1);
+const LIGHT_POS = vec3<f32>(0, -3, -3);;
+const PHONG_INT = 0.5;
+const PHONG_SPEC = 0.3;
+const PHONG_AMBIENT = 0.2;
+
 //--------------------------------------------------------------------------------------------------------------------
 
 fn mandelbulb_distance_estimator(pos: vec3<f32>) -> f32 {
@@ -53,24 +60,66 @@ fn mandelbulb_distance_estimator(pos: vec3<f32>) -> f32 {
     return 0.5 * log(r) * r / dr;    
 }
 
-// later replace with mandelbulb
-fn sphere_distance_estimator(pos: vec3<f32>) -> f32 {
-    return length(pos - sphere.xyz) - sphere.w;
+fn norm_estimate(p: vec3<f32>, epsilon: f32) -> vec3<f32> {
+    let dx = vec3<f32>(epsilon, 0.0, 0.0);
+    let dy = vec3<f32>(0.0, epsilon, 0.0);
+    let dz = vec3<f32>(0.0, 0.0, epsilon);
+
+    let p_dx = mandelbulb_distance_estimator(p + dx);
+    let p_dy = mandelbulb_distance_estimator(p + dy);
+    let p_dz = mandelbulb_distance_estimator(p + dz);
+    let p_minus_dx = mandelbulb_distance_estimator(p - dx);
+    let p_minus_dy = mandelbulb_distance_estimator(p - dy);
+    let p_minus_dz = mandelbulb_distance_estimator(p - dz);
+
+    let normal = normalize(vec3<f32>(
+        p_dx - p_minus_dx,
+        p_dy - p_minus_dy,
+        p_dz - p_minus_dz
+    )); 
+
+    return normal;
 }
 
-fn ray_marching(rayOrigin: vec3<f32>, rayDir: vec3<f32>) -> f32 {
+struct RayMarchResult {
+    distance: f32,
+    normal: vec3<f32>,
+}
+
+fn ray_marching(rayOrigin: vec3<f32>, rayDir: vec3<f32>) -> RayMarchResult {
     var total_distance = 0.0;
+    var normal = vec3<f32>(0.0);
     
     for(var i = 0; i < NUM_STEPS; i++) {
         var current_pos = rayOrigin + total_distance * rayDir;
         var distance = mandelbulb_distance_estimator(current_pos);
         total_distance += distance;
 
-        if(total_distance > MAX_TRACE_DIST || distance < MIN_HIT_DIST) {
+        if(distance < MIN_HIT_DIST) {
+            normal = norm_estimate(current_pos, 0.001);
+            break;
+        }
+
+        if(total_distance > MAX_TRACE_DIST) {
             break;
         }
     }
-    return total_distance;
+    var result: RayMarchResult;
+    result.distance = total_distance;
+    result.normal = normal;
+    return result;
+}
+
+fn phong_shading(normal: vec3<f32>, viewPos: vec3<f32>) -> vec3<f32> {
+    let lightDir = normalize(LIGHT_POS - viewPos);
+    let diffuse = max(dot(normal, lightDir), 0.0) * PHONG_INT;
+
+    let viewDir = normalize(viewPos - LIGHT_POS);
+    let refelctDir = reflect(-lightDir, normal);
+    let specular = pow(max(dot(viewDir, refelctDir), 0.0), 32.0) * PHONG_SPEC;
+
+    let ambient = PHONG_AMBIENT * PHONG_INT;
+    return (ambient + diffuse + specular) * PHONG_COLOR;
 }
 
 fn get_light(pos: vec3<f32>) -> f32 {
@@ -93,14 +142,14 @@ fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
     let rayOrigin = u.eye.xyz;
     var rayDir = normalize(u.forward.xyz + (u.right.xyz * uv.x/2 * u.eye.w) + (u.up.xyz * uv.y/2)); 
 
-    var distance = ray_marching(rayOrigin, rayDir);
+    var result = ray_marching(rayOrigin, rayDir);
 
-    if(distance > MAX_TRACE_DIST) {
+    if(result.distance > MAX_TRACE_DIST) {
         return vec4<f32>(vec3<f32>(0), 1);
     }
 
-    var pos = rayOrigin + rayDir * distance;
-    var diffuse = get_light(pos);
+    var pos = rayOrigin + rayDir * result.distance;
+    var diffuse = phong_shading(result.normal, pos);
     return vec4<f32>(vec3<f32>(ambient + diffuse), 1.0);
 }
 
