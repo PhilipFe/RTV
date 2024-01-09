@@ -6,9 +6,10 @@ class Camera {
     #sens = 0.05;
     #speed = 2.0;
     #speed_mod = 3.0;
-    #fov = 74.34
-    #znear = 0.1
-    #zfar = 25
+
+    #fov = 74.34;
+    #znear = 0.1;
+    #zfar = 25;
 
     // world space coordinate system
     #world_right     = vec3.create(1, 0, 0);
@@ -23,6 +24,7 @@ class Camera {
     // world space coordinates
     #pos;
     #rot;
+    scale;
 
     // matrices
     #p;
@@ -36,8 +38,9 @@ class Camera {
         this.#up = vec3.create();
         this.#forward = vec3.create();
         
-        this.#pos = vec3.create(0, -4, 0);
+        this.#pos = vec3.create(0, -3, 0);
         this.#rot = vec3.create(-90, 0, 180);
+        this.scale = 1.0;
         
         this.#p = mat4.perspective(degToRad(this.#fov), width/height, this.#znear, this.#zfar);
         this.#v = mat4.create();
@@ -48,7 +51,7 @@ class Camera {
 
     update(dt, input) {
         // position
-        let movespeed = this.#speed * dt;
+        let movespeed = this.#speed * (1.0/this.scale) * dt;
         if (input['ShiftLeft']) {
             movespeed *= this.#speed_mod;
         }
@@ -83,6 +86,7 @@ class Camera {
         this.#p = mat4.perspective(degToRad(this.#fov), width/height, this.#znear, this.#zfar);
         this.#reconstruct();
     }
+
 
     pv() {
         return this.#pv;

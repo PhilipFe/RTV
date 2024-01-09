@@ -1,4 +1,3 @@
-
 //#region vars
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -10,19 +9,30 @@ let swapchain_format;
 
 let renderpass_descriptor;
 let pipeline;
-let uniform_buffer;
+let uniforms_camera_buffer;
+let uniforms_parameters_buffer;
 let pipeline_bindgroup;
+
+let uniforms_camera;
+let uniforms_parameters;
+
+// ui
+let surface;
+let range_scale;
+let range_epsilon;
+let range_max_iterations;
+let range_power;
+let range_bailout;
 
 // aux
 let ts;
 let dt;
 let camera_enabled = false;
+let state_parameters = 1; // 0 - default | 1 - changed | 2 - awaiting upload to gpu
 
 // other
-let surface;
 let input = {};
 let camera;
-let uniforms;
 
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
@@ -55,8 +65,8 @@ function update() {
 // graphics
 function draw() {
     // uniforms | cpu -> gpu
-    device.queue.writeBuffer(uniform_buffer, 0, uniforms);
-
+    upload_uniforms();
+    
     // drawing
     renderpass_descriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
     const commandEncoder = device.createCommandEncoder();
@@ -76,14 +86,20 @@ function draw() {
 //----------------------------------------------------------------------------------------------------------------------
 
 function init() {
+    // ui
+    surface = document.getElementById('surface');
+    range_scale = document.getElementById('range_scale');
+    range_epsilon = document.getElementById('range_epsilon');
+    range_max_iterations = document.getElementById('range_max_iterations');
+    range_power = document.getElementById('range_power');
+    range_bailout = document.getElementById('range_bailout');
+
     // aux
     ts = performance.now();
-    surface = document.getElementById('surface');
     
     // other
     camera = new Camera(surface.width, surface.height);
     reset_mouse_accumulation();
-    setup_uniforms();
     
     // events
     surface.addEventListener('resize', surface_resized);
@@ -91,15 +107,21 @@ function init() {
     surface.addEventListener('mousedown', surface_mousedown);
     document.addEventListener('keydown', keydown);
     document.addEventListener('keyup', keyup);
+    range_scale.addEventListener('input', on_scale_changed);
+    range_epsilon.addEventListener('input', on_parameters_changed);
+    range_max_iterations.addEventListener('input', on_parameters_changed);
+    range_power.addEventListener('input', on_parameters_changed);
+    range_bailout.addEventListener('input', on_parameters_changed);
     
     // webgpu
+    setup_uniforms();
     surface_resized();
     init_webgpu().then(() => {
         console.log('webgpu initialized!');
     });
 }
 
-
+// webgpu
 async function init_webgpu() {
     adapter = await navigator.gpu.requestAdapter();
     device = await adapter.requestDevice();
@@ -113,8 +135,29 @@ async function init_webgpu() {
     });
 
     // pipeline
+    const bindGroupLayout = device.createBindGroupLayout({
+        entries: [
+            {
+                binding: 0,
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: {
+                    type: "uniform",
+                },
+            },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                buffer: {
+                    type: "uniform",
+                },
+            },
+        ],
+    });
+    const pipelineLayout = device.createPipelineLayout({
+        bindGroupLayouts: [bindGroupLayout],
+    });
     pipeline = device.createRenderPipeline({
-        layout: 'auto',
+        layout: pipelineLayout,
         vertex: {
             module: device.createShaderModule({
                 code: bulb_vert,
@@ -136,18 +179,28 @@ async function init_webgpu() {
     });
 
     // uniforms
-    uniform_buffer = device.createBuffer({
-        size: uniforms.byteLength, 
+    uniforms_camera_buffer = device.createBuffer({
+        size: uniforms_camera.byteLength, 
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+    uniforms_parameters_buffer = device.createBuffer({
+        size: uniforms_parameters.byteLength, 
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
     pipeline_bindgroup = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(0),
+        layout: bindGroupLayout,
         entries: [
             { 
                 binding: 0, 
                 resource: { 
-                    buffer: uniform_buffer 
+                    buffer: uniforms_camera_buffer 
+                }
+            },
+            { 
+                binding: 1, 
+                resource: { 
+                    buffer: uniforms_parameters_buffer
                 }
             },
         ],
@@ -170,29 +223,15 @@ async function init_webgpu() {
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
 
-//#region aux
+//#region events
 //----------------------------------------------------------------------------------------------------------------------
 
-function setup_uniforms() {
-    // vec4,vec4,vec4,vec4
-    uniforms = new Float32Array(16); 
-
-    update_uniforms();
+function on_scale_changed() {
+    camera.scale = parseFloat(range_scale.value);
 }
 
-function update_uniforms() {
-    let eye = camera.position();
-    let aspectRatio = surface.clientWidth/surface.clientHeight;
-    uniforms.set(vec4.fromValues(eye[0], eye[1], eye[2], aspectRatio), 0);
-    uniforms.set(camera.right(), 4);
-    uniforms.set(camera.up(), 8);
-    uniforms.set(camera.forward(), 12);
-}
-
-
-function reset_mouse_accumulation() {
-    input['x'] = 0;
-    input['y'] = 0;
+function on_parameters_changed() {
+    state_parameters = 1;
 }
 
 
@@ -221,8 +260,57 @@ function surface_mousedown() {
 function keydown(e) {
     input[e.code] = true;
 }
+
 function keyup(e) {
     input[e.code] = false;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region aux
+//----------------------------------------------------------------------------------------------------------------------
+
+function setup_uniforms() {
+    uniforms_camera = new Float32Array(16); 
+    uniforms_parameters = new Float32Array(4);
+    update_uniforms();
+}
+
+function update_uniforms() {
+    // camera
+    uniforms_camera.set(camera.position(), 0);
+    uniforms_camera.set(vec4.mulScalar(camera.right(), surface.clientWidth/surface.clientHeight), 4);
+    uniforms_camera.set(camera.up(), 8);
+    uniforms_camera.set(camera.forward(), 12);
+
+    // parameters
+    if(state_parameters == 1) {
+        let e = (parseFloat(range_epsilon.min) + (parseFloat(range_epsilon.max) - parseFloat(range_epsilon.value))) / 10;
+        if(e * e * e < 0.0000001) {
+            console.log("machine precision biiiiiiiitch");
+        }
+        e = Math.max(e * e * e, 0.0000001);
+        uniforms_parameters[0] = e;
+        uniforms_parameters[1] = parseFloat(range_max_iterations.value);
+        uniforms_parameters[2] = parseFloat(range_power.value);
+        uniforms_parameters[3] = parseFloat(range_bailout.value);
+        state_parameters = 2;
+    }
+}
+
+function upload_uniforms() {
+    device.queue.writeBuffer(uniforms_camera_buffer, 0, uniforms_camera);
+    if(state_parameters == 2) {
+        device.queue.writeBuffer(uniforms_parameters_buffer, 0, uniforms_parameters);
+        state_parameters = 0;
+    }
+}
+
+
+function reset_mouse_accumulation() {
+    input['x'] = 0;
+    input['y'] = 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

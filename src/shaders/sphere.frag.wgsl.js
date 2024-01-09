@@ -53,7 +53,7 @@ fn main(
 
     var d = ray_march(rayOrigin, rayDir);
     if(d > MAX_DIST) {
-        return vec4<f32>(vec3<f32>(0), 1);
+        return vec4<f32>(vec3<f32>(0.2), 1);
     }
 
     var pos = rayOrigin + rayDir * d;
