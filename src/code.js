@@ -287,10 +287,7 @@ function update_uniforms() {
     // parameters
     if(state_parameters == 1) {
         let e = (parseFloat(range_epsilon.min) + (parseFloat(range_epsilon.max) - parseFloat(range_epsilon.value))) / 10;
-        if(e * e * e < 0.0000001) {
-            console.log("machine precision biiiiiiiitch");
-        }
-        e = Math.max(e * e * e, 0.0000001);
+        e = Math.max(e * e * e, 0.0000001); // catch float32 machine precision
         uniforms_parameters[0] = e;
         uniforms_parameters[1] = parseFloat(range_max_iterations.value);
         uniforms_parameters[2] = parseFloat(range_power.value);

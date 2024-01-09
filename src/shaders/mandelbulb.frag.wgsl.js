@@ -24,7 +24,7 @@ const MAX_RAY_LENGTH = 200.0;
 
 fn mandelbulb_sdf(pos: vec3<f32>) -> f32 {
     var z = pos;
-    var dr = 1.0;
+    var dr = 1.0; // derivative
     var r = 0.0;
 
     for(var i = 0; i < i32(param.max_iter); i++) {
