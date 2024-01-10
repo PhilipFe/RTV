@@ -24,6 +24,11 @@ let range_max_iterations;
 let range_power;
 let range_bailout;
 
+const mandelbulbData = {
+    epsilon: 0.001,
+    power: 12,
+}
+
 // aux
 let ts;
 let dt;
@@ -119,6 +124,9 @@ function init() {
     init_webgpu().then(() => {
         console.log('webgpu initialized!');
     });
+
+    // d3 visualization
+    renderVisualization(/*data*/);
 }
 
 // webgpu
@@ -232,6 +240,9 @@ function on_scale_changed() {
 
 function on_parameters_changed() {
     state_parameters = 1;
+
+    // update visualization
+    renderVisualization(/*update Data*/)
 }
 
 
@@ -308,6 +319,27 @@ function upload_uniforms() {
 function reset_mouse_accumulation() {
     input['x'] = 0;
     input['y'] = 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+//#endregion
+
+//#region D3 visualiztion
+//----------------------------------------------------------------------------------------------------------------------
+function renderVisualization() {
+    const width = 400;
+    const height = 400;
+
+    const svg = d3.select("#visualization").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .style("background-color", "white");
+
+    svg.append("circle")
+        .attr("cx", width / 2)
+        .attr("cy", height / 2)
+        .attr("r", 50)
+        .style("fill", "blue");
 }
 
 //----------------------------------------------------------------------------------------------------------------------
