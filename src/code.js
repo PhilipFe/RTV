@@ -24,10 +24,11 @@ let range_max_iterations;
 let range_power;
 let range_bailout;
 
-const mandelbulbData = {
-    epsilon: 0.001,
-    power: 12,
-}
+// vis data
+let pathData = [];
+let isRecording = false;
+let sectionData = [];
+let lastRecordedTime = 0;
 
 // aux
 let ts;
@@ -62,6 +63,21 @@ function update() {
     // input
     if(camera_enabled) {
         camera.update(dt, input);
+
+        // record path data
+        const parameters = {
+            epsilon: uniforms_parameters[0],
+            max_iter: uniforms_parameters[1],
+            power: uniforms_parameters[2],
+            bailout: uniforms_parameters[3]
+        };
+
+        pathData.push({
+            position: camera.position(),
+            time: performance.now(),
+            parameters: parameters
+        });
+
     }
     reset_mouse_accumulation();
     update_uniforms();
@@ -242,7 +258,7 @@ function on_parameters_changed() {
     state_parameters = 1;
 
     // update visualization
-    renderVisualization(/*update Data*/)
+    //renderVisualization(/*update Data*/)
 }
 
 
@@ -262,14 +278,21 @@ function surface_mousedown() {
     camera_enabled = !camera_enabled;
     if(camera_enabled) {
         surface.requestPointerLock();
+        // reset path data
+        pathData = [];
     } else {
         document.exitPointerLock();
+        console.log("Path Data: ", pathData);
     }
 }
 
 
 function keydown(e) {
     input[e.code] = true;
+
+    if(e.code === "KeyR" && !isRecording) {
+
+    }
 }
 
 function keyup(e) {

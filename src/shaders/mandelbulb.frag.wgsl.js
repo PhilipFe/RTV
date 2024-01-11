@@ -67,6 +67,20 @@ fn ray_marching(ray_origin: vec3<f32>, ray_dir: vec3<f32>) -> f32 {
     return f32(steps);
 }
 
+fn heatmap(steps: f32) -> vec3<f32> {
+    let t = steps / param.max_iter;
+
+    let close_color = vec3<f32>(0.68, 0.52, 0.61); //(0.56, 0.39, 0.49);
+    let far_color = vec3<f32>(1.0, 0.88, 0.61);
+
+    return mix(far_color, close_color, t);
+}
+
+fn desaturate(color: vec3<f32>, factor: f32) -> vec3<f32> {
+    let gray = dot(color, vec3<f32>(0.33, 0.33, 0.33));
+    return mix(color, vec3(gray), 0.0);
+}
+
 @fragment
 fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
     // camera
@@ -76,10 +90,15 @@ fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
     // raymarching
     let steps = ray_marching(rayOrigin, rayDir);
 
+    let heatmap_color = heatmap(steps);
+
     // cheap AO
     var ao = steps * 0.025;         // more steps ~= more occlusion 
     ao = 1.0 - (ao / (ao + 1.0));   // normalize to [0, 1] | invert (since less occlusion -> higher intensity)
-    return vec4<f32>(vec3<f32>(ao), 1.0);
+
+    var color = desaturate(heatmap_color, 1.0 - ao);
+    color = mix(color * ao, heatmap_color, 0.5);
+    return vec4<f32>(color, 1.0);
 }
 
 `
