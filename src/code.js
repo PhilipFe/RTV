@@ -27,8 +27,9 @@ let range_bailout;
 // vis data
 let pathData = [];
 let isRecording = false;
-let sectionData = [];
-let lastRecordedTime = 0;
+let currentSection = null;
+let lastTime = 0;
+const saveTime = 1000; // save data every second
 
 // aux
 let ts;
@@ -64,19 +65,13 @@ function update() {
     if(camera_enabled) {
         camera.update(dt, input);
 
-        // record path data
-        const parameters = {
-            epsilon: uniforms_parameters[0],
-            max_iter: uniforms_parameters[1],
-            power: uniforms_parameters[2],
-            bailout: uniforms_parameters[3]
-        };
+        const currentTime = performance.now();
 
-        pathData.push({
-            position: camera.position(),
-            time: performance.now(),
-            parameters: parameters
-        });
+        // update path data
+        if(isRecording && currentSection && (currentTime - lastTime >= saveTime)) {
+            currentSection.path.push(camera.position());
+            lastTime = currentTime;
+        }
 
     }
     reset_mouse_accumulation();
@@ -278,11 +273,30 @@ function surface_mousedown() {
     camera_enabled = !camera_enabled;
     if(camera_enabled) {
         surface.requestPointerLock();
-        // reset path data
-        pathData = [];
+
+        // start recording current section
+        if(isRecording) {
+            currentSection = {
+                startTime: performance.now(),
+                path: [],
+                parameters: {
+                    epsilon: uniforms_parameters[0],
+                    max_iter: uniforms_parameters[1],
+                    power: uniforms_parameters[2],
+                    bailout: uniforms_parameters[3]
+                }
+            };
+        }
     } else {
         document.exitPointerLock();
-        console.log("Path Data: ", pathData);
+
+        // save recorded section
+        if (isRecording && currentSection) {
+            currentSection.endTime = performance.now();
+            pathData.push(currentSection);
+            console.log("Section Recorded: ", currentSection);
+            currentSection = null;
+        }
     }
 }
 
@@ -290,8 +304,28 @@ function surface_mousedown() {
 function keydown(e) {
     input[e.code] = true;
 
+    // start recording
     if(e.code === "KeyR" && !isRecording) {
-
+        isRecording = true;
+        pathData = [];
+        console.log("Recording started");
+        /*currentSection = {
+            time: performance.now(),
+            path: [],
+            parameters: {
+                epsilon: uniforms_parameters[0],
+                max_iter: uniforms_parameters[1],
+                power: uniforms_parameters[2],
+                bailout: uniforms_parameters[3]
+            }
+        };
+        startTime = currentSection.time;*/
+    }
+    
+    // stop recording
+    else if(e.code === "KeyR" && isRecording) {
+        isRecording = false;
+        console.log("Recording stopped. Data: ", pathData);
     }
 }
 
