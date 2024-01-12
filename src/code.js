@@ -69,7 +69,8 @@ function update() {
 
         // update path data
         if(isRecording && currentSection && (currentTime - lastTime >= saveTime)) {
-            currentSection.path.push(camera.position());
+            const pos = Array.from(camera.position());
+            currentSection.path.push(pos);
             lastTime = currentTime;
         }
 
@@ -326,6 +327,7 @@ function keydown(e) {
     else if(e.code === "KeyR" && isRecording) {
         isRecording = false;
         console.log("Recording stopped. Data: ", pathData);
+        renderVisualization();
     }
 }
 
@@ -384,19 +386,68 @@ function reset_mouse_accumulation() {
 //#region D3 visualiztion
 //----------------------------------------------------------------------------------------------------------------------
 function renderVisualization() {
-    const width = 400;
-    const height = 400;
+    d3.select("#visualization").selectAll("*").remove();
+
+    const data = preprocessData();
+    const width = 400, height = 400;
 
     const svg = d3.select("#visualization").append("svg")
         .attr("width", width)
         .attr("height", height)
         .style("background-color", "white");
 
-    svg.append("circle")
+    const xScale = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.x))
+        .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.y))
+        .range([height, 0]);
+
+    const line = d3.line()
+        .x(d => xScale(d.x))
+        .y(d => yScale(d.y))
+        .curve(d3.curveMonotoneX);
+    
+    //console.log("Y range:", d3.extent(data, d => d.y));
+    //console.log("Sample X values:", data.slice(0, 10).map(d => d.x));
+    //console.log("data: ", data);
+
+    svg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "blue")
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+
+    /*svg.append("circle")
         .attr("cx", width / 2)
         .attr("cy", height / 2)
         .attr("r", 50)
-        .style("fill", "blue");
+        .style("fill", "blue");*/
+}
+
+function preprocessData() {
+    let data = [];
+    let time = 0;
+
+    pathData.forEach(section => {
+        section.path.forEach((pos, i) => {
+            data.push({
+                x: time + i,
+                y: distanceToBulb(pos)
+            });
+            console.log("position: ", pos);
+        });
+        let duration = (section.endTime - section.startTime) / 1000
+        time += Math.round(duration);
+    });
+
+    return data;
+}
+
+function distanceToBulb(pos) {
+    return Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
