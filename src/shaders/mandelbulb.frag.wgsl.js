@@ -97,7 +97,8 @@ fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
     ao = 1.0 - (ao / (ao + 1.0));   // normalize to [0, 1] | invert (since less occlusion -> higher intensity)
 
     var color = desaturate(heatmap_color, 1.0 - ao);
-    color = mix(color * ao, heatmap_color, 0.5);
+    //color = mix(color * ao, heatmap_color, 0.5);
+    color = vec3<f32>(ao);
     return vec4<f32>(color, 1.0);
 }
 
