@@ -71,7 +71,8 @@ function update() {
 
         // update path data
         if(isRecording && currentSection && (currentTime - lastTime >= saveTime)) {
-            currentSection.path.push(camera.position());
+            const pos = Array.from(camera.position());
+            currentSection.path.push(pos);
             lastTime = currentTime;
         }
 
@@ -331,6 +332,7 @@ function keydown(e) {
     else if(e.code === "KeyR" && isRecording) {
         isRecording = false;
         console.log("Recording stopped. Data: ", pathData);
+        renderVisualization();
     }
 }
 
@@ -464,19 +466,89 @@ function adapt() {
 //----------------------------------------------------------------------------------------------------------------------
 
 function renderVisualization() {
-    const width = 400;
-    const height = 400;
+    d3.select("#visualization").selectAll("*").remove();
 
-    const svg = d3.select("#visualization").append("svg")
-        .attr("width", width)
-        .attr("height", height)
+    const data = preprocessData();
+    const margin = { top: 20, right: 20, bottom: 40, left: 60 },
+        width = 500 - margin.left - margin.right,
+        height = 300 - margin.top - margin.bottom;
+
+    const svg = d3.select("#visualization")
+        .append("svg")
+            .attr("width",  width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .style("background-color", "white");
 
-    svg.append("circle")
+    // X Axis
+    const xScale = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.x))
+        .range([0, width]);
+    svg.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(xScale));
+    svg.append("text")
+        .attr("text-anchor", "end")
+        .attr("x", width)
+        .attr("y", height + margin.top + 20)
+        .text("time (s)");
+    
+    // Y Axis
+    const yScale = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.y))
+        .range([height, 0]);
+    svg.append("g")
+        .call(d3.axisLeft(yScale));
+    svg.append("text")
+        .attr("text-anchor", "end")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -margin.left + 20)
+        .attr("x", -margin.top)
+        .text("Distance to Fractal");
+
+    // Line
+    const line = d3.line()
+        .x(d => xScale(d.x))
+        .y(d => yScale(d.y))
+        .curve(d3.curveMonotoneX);
+
+    svg.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "blue") //"#c19fc4"
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+
+    /*svg.append("circle")
         .attr("cx", width / 2)
         .attr("cy", height / 2)
         .attr("r", 50)
-        .style("fill", "blue");
+        .style("fill", "blue");*/
+}
+
+function preprocessData() {
+    let data = [];
+    let time = 0;
+
+    pathData.forEach(section => {
+        section.path.forEach((pos, i) => {
+            data.push({
+                x: time + i,
+                y: distanceToBulb(pos)
+            });
+            console.log("position: ", pos);
+        });
+        let duration = (section.endTime - section.startTime) / 1000
+        time += Math.round(duration);
+    });
+
+    return data;
+}
+
+function distanceToBulb(pos) {
+    return Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
