@@ -537,24 +537,26 @@ function renderVisualization() {
         .attr("fill", "#EEEEEE");
 
     // Line
-    const line = d3.line()
+    /*const line = d3.line()
         .x(d => xScale(d.x))
         .y(d => yScale(d.y))
-        .curve(d3.curveMonotoneX);
+        .curve(d3.curveMonotoneX);*/
 
-    let segments = generateLine(data);
+    data.forEach((point, i) => {
+        if (i < data.length - 1) {
+            const line = d3.line()
+                .x(d => xScale(d.x))
+                .y(d => yScale(d.y))
+                .curve(d3.curveBasis);
 
-    console.log("segments: ", segments);
-    
-    segments.forEach(s => {
-        console.log(`Segment length: ${s.data.length}`);
-        svg.append("path")
-            .datum(s.data)
-            .attr("fill", "none")
-            .attr("stroke", "#88d9ff")
-            .attr("stroke-width", 2)
-            .attr("stroke-dasharray", lineSpacing(s.epsilon))
-            .attr("d", line);
+            svg.append("path")
+                .datum([point, data[i + 1]])
+                .attr("fill", "none")
+                .attr("stroke", "#88d9ff")
+                .attr("stroke-width", 5)
+                .attr("stroke-dasharray", lineSpacing(point.epsilon))
+                .attr("d", line);
+        }
     });
 
 }
@@ -588,16 +590,14 @@ function distanceToBulb(pos) {
 
 function lineSpacing(epsilon) {
     if(epsilon >= 0.001) return "1, 0"; // solid line
-    else return "50, 3";
     
-    const minDash = 2;
-    const maxDash = 50;
+    const minDash = 50;
+    const maxDash = 2;
     let normEpsilon = 1 - (epsilon - 0.0000001) / (0.001 - 0.0000001);
 
     let dash = minDash + (maxDash - minDash) * normEpsilon;
     let gap = 3;
     console.log("spacing: ", `${dash}, ${gap}`);
-    return "50, 3";
     return `${dash}, ${gap}`;
 }
 
