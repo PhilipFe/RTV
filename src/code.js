@@ -41,6 +41,8 @@ let state_parameters = 1; // 0 - default | 1 - changed | 2 - awaiting upload to 
 let input = {};
 let camera;
 
+let MAX_RAY_LENGTH = 200.0;
+
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
 
@@ -75,6 +77,9 @@ function update() {
         }
 
     }
+
+    adapt();
+
     reset_mouse_accumulation();
     update_uniforms();
 }
@@ -340,6 +345,8 @@ function keyup(e) {
 //#region aux
 //----------------------------------------------------------------------------------------------------------------------
 
+// uniforms
+
 function setup_uniforms() {
     uniforms_camera = new Float32Array(16); 
     uniforms_parameters = new Float32Array(4);
@@ -373,10 +380,82 @@ function upload_uniforms() {
     }
 }
 
+// mouse
 
 function reset_mouse_accumulation() {
     input['x'] = 0;
     input['y'] = 0;
+}
+
+
+// adaptive parameters
+
+function mandelbulb_sdf(pos) {
+    var z = Float32Array.from(pos);
+    var dr = 1.0; // derivative
+    var r = 0.0;
+
+    var maxIter = parseInt(uniforms_parameters[1])
+    var power = uniforms_parameters[2];
+    var bailout = uniforms_parameters[3];
+
+    for(var i = 0; i < maxIter; i++) {
+        r = vec3.length(z);
+        if(r > bailout) {
+            break;
+        }
+
+        // to polar
+        var theta = Math.acos(z[2] / r);
+        var phi = Math.atan2(z[1], z[0]);
+        dr = Math.pow(r, power - 1.0) * power * dr + 1.0;
+
+        // scale and rotate
+        var zr = Math.pow(r, power);
+        theta = theta * power;
+        phi = phi * power;
+
+        // to cartesian 
+        var delta = vec3.fromValues(Math.sin(theta) * Math.cos(phi), Math.sin(phi) * Math.sin(theta), Math.cos(theta));
+        vec3.add(vec3.mulScalar(delta, zr), pos, z);
+    }
+
+    return 0.5 * Math.log(r) * r / dr;    
+}
+
+function ray_marching(ray_origin, ray_dir) {
+    var d = mandelbulb_sdf(ray_origin);
+    var pos = vec3.add(ray_origin, vec3.mulScalar(ray_dir, d));
+    var distance = d;
+    var steps = 1;
+
+    var epsilon = uniforms_parameters[0];
+
+    while(steps < 10 && d > epsilon) {
+        d = mandelbulb_sdf(pos);
+        vec3.add(pos, vec3.mulScalar(ray_dir, d), pos);
+        distance += d;
+        steps++;
+    }
+
+    return distance;
+}
+
+function adapt() {
+    // distance to fractal surface
+    var distance = ray_marching(Float32Array.from(camera.position()), Float32Array.from(camera.forward()));
+    
+    // scale (movement speed / fractal size)
+    range_scale.value = Math.pow(1.0 / distance, 1.2);
+    on_scale_changed();
+
+    // details
+    range_epsilon.value = range_epsilon.max - Math.pow(distance, 0.8) * 15;
+    
+    // depth
+    range_max_iterations.value = parseFloat(range_max_iterations.min) * 2 + Math.log10(2.0 / distance) * 7;
+    
+    on_parameters_changed();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -384,6 +463,7 @@ function reset_mouse_accumulation() {
 
 //#region D3 visualiztion
 //----------------------------------------------------------------------------------------------------------------------
+
 function renderVisualization() {
     d3.select("#visualization").selectAll("*").remove();
 
