@@ -25,6 +25,21 @@ let range_power;
 let range_bailout;
 
 // vis data
+// pathData is an array of sections, each section representing a continuous movement period
+// Each section has the following structure:
+// {
+//   startTime: [timestamp of the start of the section],
+//   endTime: [timestamp of the end of the section],
+//   path: [
+//     [x1, y1, z1], // Position of the camera at each second
+//     [x2, y2, z2], 
+//     ...
+//   ],
+//   parameters: [
+//     { epsilon: value, max_iter: value, power: value, bailout: value }, // Parameters at each second
+//     ...
+//   ]
+// }
 let pathData = [];
 let isRecording = false;
 let currentSection = null;
@@ -71,8 +86,18 @@ function update() {
 
         // update path data
         if(isRecording && currentSection && (currentTime - lastTime >= saveTime)) {
+
             const pos = Array.from(camera.position());
             currentSection.path.push(pos);
+
+            const settings =  {
+                epsilon: uniforms_parameters[0],
+                max_iter: uniforms_parameters[1],
+                power: uniforms_parameters[2],
+                bailout: uniforms_parameters[3]
+            }
+            currentSection.parameters.push(settings);
+
             lastTime = currentTime;
         }
 
@@ -285,12 +310,7 @@ function surface_mousedown() {
             currentSection = {
                 startTime: performance.now(),
                 path: [],
-                parameters: {
-                    epsilon: uniforms_parameters[0],
-                    max_iter: uniforms_parameters[1],
-                    power: uniforms_parameters[2],
-                    bailout: uniforms_parameters[3]
-                }
+                parameters: []
             };
         }
     } else {
@@ -318,17 +338,21 @@ function keydown(e) {
         currentSection = {
             startTime: performance.now(),
             path: [],
-            parameters: {
-                epsilon: uniforms_parameters[0],
-                max_iter: uniforms_parameters[1],
-                power: uniforms_parameters[2],
-                bailout: uniforms_parameters[3]
-            }
+            parameters: []
         };
     }
     
     // stop recording
     else if(e.code === "KeyR" && isRecording) {
+
+        // push last data
+        if(currentSection) {
+            currentSection.endTime = performance.now();
+            pathData.push(currentSection);
+            console.log("Section Recorded: ", currentSection);
+            currentSection = null;
+        }
+        
         isRecording = false;
         console.log("Recording stopped. Data: ", pathData);
         renderVisualization();
@@ -364,6 +388,7 @@ function update_uniforms() {
     if(state_parameters == 1) {
         let e = (parseFloat(range_epsilon.min) + (parseFloat(range_epsilon.max) - parseFloat(range_epsilon.value))) / 10;
         e = Math.max(e * e * e, 0.0000001); // catch float32 machine precision
+
         uniforms_parameters[0] = e;
         uniforms_parameters[1] = parseFloat(range_max_iterations.value);
         uniforms_parameters[2] = parseFloat(range_power.value);
@@ -495,8 +520,11 @@ function renderVisualization() {
         .attr("fill", "#EEEEEE");
     
     // Y Axis
+
+    const rangeY = d3.extent(data, d=>d.y);
+
     const yScale = d3.scaleLinear()
-        .domain(d3.extent(data, d => d.y))
+        .domain([0, rangeY[1]])
         .range([height, 0]);
     svg.append("g")
         .call(d3.axisLeft(yScale));
@@ -514,19 +542,21 @@ function renderVisualization() {
         .y(d => yScale(d.y))
         .curve(d3.curveMonotoneX);
 
-    svg.append("path")
-        .datum(data)
-        .attr("fill", "none")
-        .attr("stroke", "#88d9ff") //"#c19fc4"
-        .attr("stroke-width", 2)
-        .attr("d", line);
+    let segments = generateLine(data);
 
+    console.log("segments: ", segments);
+    
+    segments.forEach(s => {
+        console.log(`Segment length: ${s.data.length}`);
+        svg.append("path")
+            .datum(s.data)
+            .attr("fill", "none")
+            .attr("stroke", "#88d9ff")
+            .attr("stroke-width", 2)
+            .attr("stroke-dasharray", lineSpacing(s.epsilon))
+            .attr("d", line);
+    });
 
-    /*svg.append("circle")
-        .attr("cx", width / 2)
-        .attr("cy", height / 2)
-        .attr("r", 50)
-        .style("fill", "blue");*/
 }
 
 function preprocessData() {
@@ -537,9 +567,13 @@ function preprocessData() {
         section.path.forEach((pos, i) => {
             data.push({
                 x: time + i,
-                y: distanceToBulb(pos)
+                y: distanceToBulb(pos),
+                epsilon: section.parameters[i].epsilon,
+                max_iter: section.parameters[i].max_iter,
+                power: section.parameters[i].power,
+                bailout: section.parameters[i].bailout,
+
             });
-            console.log("position: ", pos);
         });
         let duration = (section.endTime - section.startTime) / 1000
         time += Math.round(duration);
@@ -550,6 +584,37 @@ function preprocessData() {
 
 function distanceToBulb(pos) {
     return Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
+}
+
+function lineSpacing(epsilon) {
+    if(epsilon >= 0.001) return "1, 0"; // solid line
+    else return "50, 3";
+    
+    const minDash = 2;
+    const maxDash = 50;
+    let normEpsilon = 1 - (epsilon - 0.0000001) / (0.001 - 0.0000001);
+
+    let dash = minDash + (maxDash - minDash) * normEpsilon;
+    let gap = 3;
+    console.log("spacing: ", `${dash}, ${gap}`);
+    return "50, 3";
+    return `${dash}, ${gap}`;
+}
+
+function generateLine(data) {
+    let segments = [];
+    let currentSegment = { data: [], epsilon: data[0].epsilon };
+
+    data.forEach((point, index) => {
+        if (point.epsilon !== currentSegment.epsilon) {
+            segments.push(currentSegment);
+            currentSegment = { data: [], epsilon: point.epsilon };
+        }
+        currentSegment.data.push(point);
+    });
+    segments.push(currentSegment); // push the last segment
+
+    return segments;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
