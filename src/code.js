@@ -310,8 +310,8 @@ function keydown(e) {
         isRecording = true;
         pathData = [];
         console.log("Recording started");
-        /*currentSection = {
-            time: performance.now(),
+        currentSection = {
+            startTime: performance.now(),
             path: [],
             parameters: {
                 epsilon: uniforms_parameters[0],
@@ -320,7 +320,6 @@ function keydown(e) {
                 bailout: uniforms_parameters[3]
             }
         };
-        startTime = currentSection.time;*/
     }
     
     // stop recording
@@ -412,7 +411,8 @@ function renderVisualization() {
         .attr("text-anchor", "end")
         .attr("x", width)
         .attr("y", height + margin.top + 20)
-        .text("time (s)");
+        .text("time (s)")
+        .attr("fill", "#EEEEEE");
     
     // Y Axis
     const yScale = d3.scaleLinear()
@@ -425,7 +425,8 @@ function renderVisualization() {
         .attr("transform", "rotate(-90)")
         .attr("y", -margin.left + 20)
         .attr("x", -margin.top)
-        .text("Distance to Fractal");
+        .text("Distance to Fractal")
+        .attr("fill", "#EEEEEE");
 
     // Line
     const line = d3.line()
@@ -436,7 +437,7 @@ function renderVisualization() {
     svg.append("path")
         .datum(data)
         .attr("fill", "none")
-        .attr("stroke", "blue") //"#c19fc4"
+        .attr("stroke", "#88d9ff") //"#c19fc4"
         .attr("stroke-width", 2)
         .attr("d", line);
 
