@@ -45,6 +45,7 @@ let isRecording = false;
 let currentSection = null;
 let lastTime = 0;
 const saveTime = 1000; // save data every second
+let = nextStartTime = 0;
 
 // aux
 let ts;
@@ -97,6 +98,7 @@ function update() {
                 bailout: uniforms_parameters[3]
             }
             currentSection.parameters.push(settings);
+            currentSection.endTime += 1;
 
             lastTime = currentTime;
         }
@@ -308,7 +310,8 @@ function surface_mousedown() {
         // start recording current section
         if(isRecording) {
             currentSection = {
-                startTime: Math.ceil(performance.now()/1000), // round to full seconds
+                startTime: nextStartTime,
+                endTime: nextStartTime,
                 path: [],
                 parameters: []
             };
@@ -318,9 +321,9 @@ function surface_mousedown() {
 
         // save recorded section
         if (isRecording && currentSection) {
-            currentSection.endTime = Math.ceil(performance.now()/1000);
             pathData.push(currentSection);
             console.log("Section Recorded: ", currentSection);
+            nextStartTime = currentSection.endTime;
             currentSection = null;
         }
     }
@@ -336,7 +339,8 @@ function keydown(e) {
         pathData = [];
         console.log("Recording started");
         currentSection = {
-            startTime: Math.ceil(performance.now()/1000),
+            startTime: 0,
+            endTime: 0,
             path: [],
             parameters: []
         };
@@ -347,7 +351,6 @@ function keydown(e) {
 
         // push last data
         if(currentSection) {
-            currentSection.endTime = performance.now();
             pathData.push(currentSection);
             console.log("Section Recorded: ", currentSection);
             currentSection = null;
@@ -552,7 +555,7 @@ function renderVisualization() {
                 .datum([point, data[i + 1]])
                 .attr("fill", "none")
                 .attr("stroke", colorScale(point.max_iter))
-                .attr("stroke-width", 8)
+                .attr("stroke-width", 5)
                 .attr("stroke-linecap", "round")
                 .attr("stroke-dasharray", lineSpacing(point.epsilon))
                 .attr("d", line);
@@ -561,8 +564,8 @@ function renderVisualization() {
     });
 
     // seperate sections
-    /*pathData.forEach(section => {
-        const startX = section.startTime;
+    pathData.forEach(section => {
+        const startX = xScale(section.endTime);
         console.log("start: ", startX);
         svg.append("line")
         .attr("x1", startX)
@@ -573,7 +576,7 @@ function renderVisualization() {
         .attr("stroke-width", 1)
         .style("opacity", 0.7);
 
-    })*/
+    })
 
 
 }
@@ -594,9 +597,12 @@ function preprocessData() {
 
             });
         });
+        time = section.endTime;
         let duration = (section.endTime - section.startTime) / 1000
         time += Math.round(duration);
     });
+
+    console.log("data: ", data);
 
     return data;
 }
@@ -613,7 +619,7 @@ function lineSpacing(epsilon) {
     let normEpsilon = 1 - (epsilon - 0.0000001) / (0.001 - 0.0000001);
 
     let dash = minDash + (maxDash - minDash) * normEpsilon;
-    let gap = 15;
+    let gap = 10;
     console.log("spacing: ", `${dash}, ${gap}`);
     return `${dash}, ${gap}`;
 }
