@@ -325,7 +325,7 @@ function surface_mousedown() {
         // save recorded section
         if (isRecording && currentSection) {
             pathData.push(currentSection);
-            console.log("Section Recorded: ", currentSection);
+            //console.log("Section Recorded: ", currentSection);
             nextStartTime = currentSection.endTime;
             currentSection = null;
         }
@@ -355,7 +355,7 @@ function keydown(e) {
         // push last data
         if(currentSection) {
             pathData.push(currentSection);
-            console.log("Section Recorded: ", currentSection);
+            //console.log("Section Recorded: ", currentSection);
             currentSection = null;
         }
         
@@ -500,8 +500,6 @@ function renderVisualization() {
 
     const data = preprocessData();
 
-    console.log("vis data: ", data);
-
     const margin = { top: 20, right: 20, bottom: 40, left: 60 },
         width = 500 - margin.left - margin.right,
         height = 300 - margin.top - margin.bottom;
@@ -627,15 +625,6 @@ function renderVisualization() {
                 .attr("dy", "1.2em");
     };
 
-    /*svg.append("rect")
-        .style("fill", "none")
-        .style("pointer-events", "all")
-        .attr("width", width)
-        .attr("height", height)
-        .on("mouseover", mouseoverHandler)
-        .on("mousemove", mousemoveHandler)
-        .on("mouseout", mouseoutHandler)*/
-
     // append circles for click event
     svg.selectAll("circle.data-point")
         .data(data)
@@ -645,6 +634,7 @@ function renderVisualization() {
         .attr("cx", d => xScale(d.x))
         .attr("cy", d => yScale(d.y))
         .attr("r", 5)
+        .style("opacity", 0)
         .on("mouseover", function(event, d) {
             focus.style("opacity", 1)
             focus
@@ -658,7 +648,6 @@ function renderVisualization() {
             focusText.style("opacity", 0);
         })
         .on("click", function(event, d) {
-            console.log("click!");
             jumpTo(d);
         });
 
@@ -691,8 +680,6 @@ function preprocessData() {
 }
 
 function jumpTo(data) {
-
-    console.log("jump!");
 
     camera.setPosition(data.pos[0], data.pos[1], data.pos[2]);
     camera.setRotation(data.rot[0], data.rot[2]);
