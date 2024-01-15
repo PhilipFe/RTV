@@ -96,6 +96,21 @@ class Camera {
         return this.#pos;
     }
 
+    setPosition(x, y, z) {
+        this.#pos = vec3.create(x, y, z);
+        this.#reconstruct();
+    }
+
+    rotation() {
+        return this.#rot;
+    }
+
+    setRotation(pitch, yaw) {
+        this.#rot[0] = pitch;
+        this.#rot[2] = yaw;
+        this.#reconstruct();
+    }
+
     right() {
         return this.#right;
     }

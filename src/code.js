@@ -30,11 +30,11 @@ let range_bailout;
 // {
 //   startTime: [timestamp of the start of the section],
 //   endTime: [timestamp of the end of the section],
-//   path: [
-//     [x1, y1, z1], // Position of the camera at each second
-//     [x2, y2, z2], 
+//   camera: [{
+//     pos: [x1, y1, z1], // Position of the camera at each second
+//     rot: [pitch, 0, yaw], 
 //     ...
-//   ],
+//   }],
 //   parameters: [
 //     { epsilon: value, max_iter: value, power: value, bailout: value }, // Parameters at each second
 //     ...
@@ -88,8 +88,12 @@ function update() {
         // update path data
         if(isRecording && currentSection && (currentTime - lastTime >= saveTime)) {
 
-            const pos = Array.from(camera.position());
-            currentSection.path.push(pos);
+            const cameraSettings = {
+                pos: Array.from(camera.position()),
+                rot: Array.from(camera.rotation())
+            };
+
+            currentSection.camera.push(cameraSettings);
 
             const settings =  {
                 epsilon: uniforms_parameters[0],
@@ -102,7 +106,6 @@ function update() {
 
             lastTime = currentTime;
         }
-
     }
 
     adapt();
@@ -312,7 +315,7 @@ function surface_mousedown() {
             currentSection = {
                 startTime: nextStartTime,
                 endTime: nextStartTime,
-                path: [],
+                camera: [],
                 parameters: []
             };
         }
@@ -341,7 +344,7 @@ function keydown(e) {
         currentSection = {
             startTime: 0,
             endTime: 0,
-            path: [],
+            camera: [],
             parameters: []
         };
     }
@@ -579,6 +582,87 @@ function renderVisualization() {
         .attr("stroke-width", 1)
 
     })
+
+
+    // hover text
+    const bisect = d3.bisector(function(d) {return d.x;}).left;
+
+    const focus = svg.append("g")
+        .append("circle")
+        .style("fill", "none")
+        .attr("stroke", "black")
+        .attr("r", 8.5)
+        .style("opacity", 0);
+
+    const focusText = svg.append("g")
+        .append("text")
+        .style("opacity", 0)
+        .attr("text-anchor", "left")
+        .attr("aligment-baseline", "middle")
+
+    const updateText = (d) => {
+        focusText.selectAll("*").remove();
+
+        const textX = xScale(d.x) - 25;
+        const textY = yScale(d.y) - 60;
+
+        focusText
+            .html("")
+            .attr("x", textX)
+            .attr("y", textY)
+            .style("font-size", "12px")
+            .attr("fill", "#EEEEEE")
+            .style("opacity", 1)
+            .append("tspan")
+                .text("\u03B5: " + Number(d.epsilon).toFixed(7))
+                .attr("x", textX)
+                .attr("dy", 0)
+            .append("tspan")
+                .text("max iter: " + d.max_iter)
+                .attr("x", textX)
+                .attr("dy", "1.2em")
+            .append("tspan")
+                .text("power: " + d.power)
+                .attr("x", textX)
+                .attr("dy", "1.2em");
+    };
+
+    /*svg.append("rect")
+        .style("fill", "none")
+        .style("pointer-events", "all")
+        .attr("width", width)
+        .attr("height", height)
+        .on("mouseover", mouseoverHandler)
+        .on("mousemove", mousemoveHandler)
+        .on("mouseout", mouseoutHandler)*/
+
+    // append circles for click event
+    svg.selectAll("circle.data-point")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "data-point")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", 5)
+        .on("mouseover", function(event, d) {
+            focus.style("opacity", 1)
+            focus
+                .attr("cx", xScale(d.x))
+                .attr("cy", yScale(d.y));
+
+            updateText(d);
+        })
+        .on("mouseout", function() {
+            focus.style("opacity", 0);
+            focusText.style("opacity", 0);
+        })
+        .on("click", function(event, d) {
+            console.log("click!");
+            jumpTo(d);
+        });
+
+    
 }
 
 function preprocessData() {
@@ -586,10 +670,12 @@ function preprocessData() {
     let time = 0;
 
     pathData.forEach(section => {
-        section.path.forEach((pos, i) => {
+        section.camera.forEach((setting, i) => {
             data.push({
                 x: time + i,
-                y: distanceToBulb(pos),
+                y: distanceToBulb(setting.pos),
+                pos: setting.pos,
+                rot: setting.rot,
                 epsilon: section.parameters[i].epsilon,
                 max_iter: section.parameters[i].max_iter,
                 power: section.parameters[i].power,
@@ -602,6 +688,19 @@ function preprocessData() {
         time += Math.round(duration);
     });
     return data;
+}
+
+function jumpTo(data) {
+
+    console.log("jump!");
+
+    camera.setPosition(data.pos[0], data.pos[1], data.pos[2]);
+    camera.setRotation(data.rot[0], data.rot[2]);
+
+    uniforms_parameters[0] = data.epsilon;
+    uniforms_parameters[1] = data.max_iter;
+    uniforms_parameters[2] = data.power;
+    uniforms_parameters[3] = data.bailout;
 }
 
 function distanceToBulb(pos) {
@@ -619,5 +718,6 @@ function lineSpacing(epsilon) {
     let gap = 10;
     return `${dash}, ${gap}`;
 }
+
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
