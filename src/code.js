@@ -496,6 +496,9 @@ function renderVisualization() {
     d3.select("#visualization").selectAll("*").remove();
 
     const data = preprocessData();
+
+    console.log("vis data: ", data);
+
     const margin = { top: 20, right: 20, bottom: 40, left: 60 },
         width = 500 - margin.left - margin.right,
         height = 300 - margin.top - margin.bottom;
@@ -565,20 +568,17 @@ function renderVisualization() {
 
     // seperate sections
     pathData.forEach(section => {
-        const startX = xScale(section.endTime);
-        console.log("start: ", startX);
+        const startX = xScale(section.startTime);
+        const startY = yScale(data[section.startTime].y)
         svg.append("line")
         .attr("x1", startX)
         .attr("x2", startX)
-        .attr("y1", 0)
-        .attr("y2", height)
+        .attr("y1", startY - 20)
+        .attr("y2", startY + 20)
         .attr("stroke", "#ff0000")  // Red vertical line for visibility
         .attr("stroke-width", 1)
-        .style("opacity", 0.7);
 
     })
-
-
 }
 
 function preprocessData() {
@@ -601,9 +601,6 @@ function preprocessData() {
         let duration = (section.endTime - section.startTime) / 1000
         time += Math.round(duration);
     });
-
-    console.log("data: ", data);
-
     return data;
 }
 
@@ -620,25 +617,7 @@ function lineSpacing(epsilon) {
 
     let dash = minDash + (maxDash - minDash) * normEpsilon;
     let gap = 10;
-    console.log("spacing: ", `${dash}, ${gap}`);
     return `${dash}, ${gap}`;
 }
-
-function generateLine(data) {
-    let segments = [];
-    let currentSegment = { data: [], epsilon: data[0].epsilon };
-
-    data.forEach((point, index) => {
-        if (point.epsilon !== currentSegment.epsilon) {
-            segments.push(currentSegment);
-            currentSegment = { data: [], epsilon: point.epsilon };
-        }
-        currentSegment.data.push(point);
-    });
-    segments.push(currentSegment); // push the last segment
-
-    return segments;
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
