@@ -57,7 +57,22 @@ let state_parameters = 1; // 0 - default | 1 - changed | 2 - awaiting upload to 
 let input = {};
 let camera;
 
-let MAX_RAY_LENGTH = 200.0;
+// parameters
+let MAX_RAY_LENGTH = 10.0;
+let MAX_SCALE = 1;
+let MAX_ITER = 128;
+let MAX_POWER = 16;
+let MAX_BAILOUT = 10;
+
+let MIN_EPSILON = 0.0000001;
+let MIN_ITER = 5;
+let MIN_POWER = 1;
+let MIN_BAILOUT = 1.25;
+
+let epsilon = 0.001;
+let max_iter = 5.0;
+let power = 12.0;
+let bailout = 1.25;
 
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
@@ -286,7 +301,7 @@ function on_scale_changed() {
 }
 
 function on_parameters_changed() {
-    state_parameters = 1;
+    adapt();
 
     // update visualization
     //renderVisualization(/*update Data*/)
@@ -392,13 +407,10 @@ function update_uniforms() {
 
     // parameters
     if(state_parameters == 1) {
-        let e = (parseFloat(range_epsilon.min) + (parseFloat(range_epsilon.max) - parseFloat(range_epsilon.value))) / 10;
-        e = Math.max(e * e * e, 0.0000001); // catch float32 machine precision
-
-        uniforms_parameters[0] = e;
-        uniforms_parameters[1] = parseFloat(range_max_iterations.value);
-        uniforms_parameters[2] = parseFloat(range_power.value);
-        uniforms_parameters[3] = parseFloat(range_bailout.value);
+        uniforms_parameters[0] = parseFloat(epsilon);
+        uniforms_parameters[1] = parseFloat(max_iter);
+        uniforms_parameters[2] = parseFloat(power);
+        uniforms_parameters[3] = parseFloat(bailout);
         state_parameters = 2;
     }
 }
@@ -469,24 +481,23 @@ function ray_marching(ray_origin, ray_dir) {
         steps++;
     }
 
-    return distance;
+    return isNaN(distance) ? 0.0000001 : distance;
 }
 
 function adapt() {
     // distance to fractal surface
     var distance = ray_marching(Float32Array.from(camera.position()), Float32Array.from(camera.forward()));
     
-    // scale (movement speed / fractal size)
-    range_scale.value = Math.pow(1.0 / distance, 1.2);
-    on_scale_changed();
+    // parameters (manually tweaked)
+    camera.scale = Math.max(1.0 / MAX_SCALE, Math.pow(1.0 / distance, 1.2) * (1.0 / (parseFloat(range_scale.value) + 0.0000001)));
+    epsilon = MIN_EPSILON + Math.pow(distance, 0.9) * 10 * (parseFloat(1.0 - range_epsilon.value) * 0.0001);
+    max_iter = Math.min(MAX_ITER, MIN_ITER + Math.log10(2.0 / distance) * 7 * parseFloat(range_max_iterations.value));
 
-    // details
-    range_epsilon.value = range_epsilon.max - Math.pow(distance, 0.8) * 15;
+    power = MIN_POWER + (MAX_POWER - MIN_POWER - 1) * parseFloat(range_power.value);
+    bailout = MIN_BAILOUT + (MAX_BAILOUT - MIN_BAILOUT) * parseFloat(range_bailout.value);
     
-    // depth
-    range_max_iterations.value = parseFloat(range_max_iterations.min) * 2 + Math.log10(2.0 / distance) * 7;
-    
-    on_parameters_changed();
+    // notify parameters changed
+    state_parameters = 1;
 }
 
 //----------------------------------------------------------------------------------------------------------------------

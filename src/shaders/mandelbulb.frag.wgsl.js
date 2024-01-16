@@ -18,7 +18,10 @@ struct Parameters {
 
 //--------------------------------------------------------------------------------------------------------------------
 
-const MAX_RAY_LENGTH = 200.0;
+const MAX_RAY_LENGTH = 10.0;
+
+const COLOR_NEAR = vec3<f32>(1.0, 1.0, 1.0);
+const COLOR_FAR = vec3<f32>(0.2, 0.2, 0.6);
 
 //--------------------------------------------------------------------------------------------------------------------
 
@@ -50,35 +53,28 @@ fn mandelbulb_sdf(pos: vec3<f32>) -> f32 {
     return 0.5 * log(r) * r / dr;    
 }
 
-fn ray_marching(ray_origin: vec3<f32>, ray_dir: vec3<f32>) -> f32 {
+struct RayPoint {
+    steps: f32,
+    distance: f32
+};
+
+fn ray_marching(ray_origin: vec3<f32>, ray_dir: vec3<f32>) -> RayPoint {
     var d = mandelbulb_sdf(ray_origin);
     var pos = ray_origin + ray_dir * d;
-    var distance = d;
-    var steps = 1;
+    
+    var result: RayPoint;
+    result.distance = d;
+    result.steps = 1;
 
-    while(distance < MAX_RAY_LENGTH && d > param.epsilon) {
+    while(result.distance < MAX_RAY_LENGTH && d > param.epsilon) {
         d = mandelbulb_sdf(pos);
         pos += ray_dir * d;
-        distance += d;
-        steps++;
+        result.distance += d;
+        result.steps += 1;
         
     }
 
-    return f32(steps);
-}
-
-fn heatmap(steps: f32) -> vec3<f32> {
-    let t = steps / param.max_iter;
-
-    let close_color = vec3<f32>(0.68, 0.52, 0.61); //(0.56, 0.39, 0.49);
-    let far_color = vec3<f32>(1.0, 0.88, 0.61);
-
-    return mix(far_color, close_color, t);
-}
-
-fn desaturate(color: vec3<f32>, factor: f32) -> vec3<f32> {
-    let gray = dot(color, vec3<f32>(0.33, 0.33, 0.33));
-    return mix(color, vec3(gray), 0.5);
+    return result;
 }
 
 @fragment
@@ -88,18 +84,14 @@ fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
     let rayDir = normalize(camera.forward.xyz + (camera.right.xyz * uv.x/2) + (camera.up.xyz * uv.y/2)); 
 
     // raymarching
-    let steps = ray_marching(rayOrigin, rayDir);
+    let p = ray_marching(rayOrigin, rayDir);
 
-    let heatmap_color = heatmap(steps);
-
-    // cheap AO
-    var ao = steps * 0.025;         // more steps ~= more occlusion 
-    ao = 1.0 - (ao / (ao + 1.0));   // normalize to [0, 1] | invert (since less occlusion -> higher intensity)
-
-    var color = desaturate(heatmap_color, 1.0 - ao);
-    color = mix(color * ao, heatmap_color, 0.5);
-    //color = vec3<f32>(ao);
-    return vec4<f32>(color, 1.0);
+    // color
+    var ao = p.steps * 0.1;
+    ao = (ao / (ao + 1));
+    let f = clamp(pow(ao, 2), 0, 1);
+    let c = mix(COLOR_NEAR, COLOR_FAR, f);
+    return vec4<f32>(c, 1.0);   
 }
 
 `
