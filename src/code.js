@@ -19,10 +19,15 @@ let uniforms_parameters;
 // ui
 let surface;
 let range_scale;
+let range_scale_text;
 let range_epsilon;
+let range_epsilon_text;
 let range_max_iterations;
+let range_max_iterations_text;
 let range_power;
+let range_power_text;
 let range_bailout;
+let range_bailout_text;
 
 // vis data
 // pathData is an array of sections, each section representing a continuous movement period
@@ -141,10 +146,15 @@ function init() {
     // ui
     surface = document.getElementById('surface');
     range_scale = document.getElementById('range_scale');
+    range_scale_text = document.getElementById('range_scale_value');
     range_epsilon = document.getElementById('range_epsilon');
+    range_epsilon_text = document.getElementById('range_epsilon_value');
     range_max_iterations = document.getElementById('range_max_iterations');
+    range_max_iterations_text = document.getElementById('range_max_iterations_value');
     range_power = document.getElementById('range_power');
+    range_power_text = document.getElementById('range_power_value');
     range_bailout = document.getElementById('range_bailout');
+    range_bailout_text = document.getElementById('range_bailout_value');
 
     // aux
     ts = performance.now();
@@ -478,14 +488,21 @@ function adapt() {
     
     // scale (movement speed / fractal size)
     range_scale.value = Math.pow(1.0 / distance, 1.2);
+    range_scale_text.textContent = range_scale.value;
     on_scale_changed();
 
     // details
     range_epsilon.value = range_epsilon.max - Math.pow(distance, 0.8) * 15;
+    console.log('range_epsilon.value:', range_epsilon.value);
+    range_epsilon_text.textContent = parseFloat(range_epsilon.value).toFixed(7);
     
     // depth
     range_max_iterations.value = parseFloat(range_max_iterations.min) * 2 + Math.log10(2.0 / distance) * 7;
-    
+    range_max_iterations_text.textContent = range_max_iterations.value;
+
+    range_power_text.textContent = uniforms_parameters[2];
+    range_bailout_text.textContent = uniforms_parameters[3];
+
     on_parameters_changed();
 }
 

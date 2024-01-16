@@ -19,48 +19,55 @@
 </head>
 
 <body onload="init();">
-    <header class="aligned_left">
-        <h1>3D Mandelbulb</h1>
-    </header>
-
     <div class="app">
         <div class="ui">
             <div>
-                <h3>Settings</h3>
+                <h3>Parameters</h3>
             </div>
-            <div class="space"><!-- ---------------------------------------------------------------------------------------------------------------------- --></div>
             
             <div>
-                <label for="range_scale">Scale</label>
+                <div>
+                    <label for="range_scale">scale:</label>
+                    <span id="range_scale_value">1</span>
+                </div>
                 <input type="range" id="range_scale" min="0.25" max="10000" step="0.25" value="1">
             </div>
-
-            <div class="space"><!-- ---------------------------------------------------------------------------------------------------------------------- --></div>
             
             <div>
-                <label for="range_epsilon">Detail</label>
+                <div>
+                    <label for="range_epsilon">epsilon:</label>
+                    <span id="range_epsilon_value">0.001</span>
+                </div>
                 <input type="range" id="range_epsilon" min="0.001" max="1" step="0.001" value="0.001">
             </div>
             <div>
-                <label for="range_max_iterations">Depth</label>
+                <div>
+                    <label for="range_max_iterations">max iterations:</label>
+                    <span id="range_max_iterations_value">5</span>
+                </div>
                 <input type="range" id="range_max_iterations" min="2" max="32" step="1" value="5">
             </div>
             <div>
-                <label for="range_power">Power</label>
+                <div>
+                    <label for="range_power">power:</label>
+                    <span id="range_power_value">12</span>
+                </div>
                 <input type="range" id="range_power" min="1" max="32" step="0.1" value="12">
             </div>
             <div>
-                <label for="range_bailout">Bailout</label>
+                <div>
+                    <label for="range_bailout">bailout:</label>
+                    <span id="range_bailout_value">12</span>
+                </div>
                 <input type="range" id="range_bailout" min="0" max="10" step="0.25" value="1.5">
             </div>
 
-            <div class="space"><!-- ---------------------------------------------------------------------------------------------------------------------- --></div>
-
-            <div id="visualization"></div>
+            <!--<div id="visualization"></div>-->
         </div>
 
         <div>
-            <canvas id="surface"></canvas>
+                <h1>MANDELBULB</h1>
+                <canvas id="surface"></canvas>
         </div>
     </div>
 

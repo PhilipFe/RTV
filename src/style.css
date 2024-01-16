@@ -7,11 +7,11 @@
 }
 
 :root {
-    --color_background: #646472;
+    --color_background: #000014;
     --color_foreground: #EEEEEE;
     --color_foreground_inactive: #BBBBBB;
     --color_selection: #AAAAAA;
-    --color_accent: #88d9ff;
+    --color_accent: #E5974D; /* #88d9ff; */
     --font_size: 1.2em;
 }
 
@@ -19,6 +19,15 @@ body {
     background: var(--color_background);
     color: var(--color_foreground);
     font-family: Montserrat;
+    margin: 0;
+}
+
+h1 {
+    font-size: 1.5em;
+    letter-spacing: 0.5rem;
+    text-transform: uppercase;
+    font-weight: 300;
+    text-align: center;
 }
 
 a {
@@ -105,16 +114,15 @@ header {
 
 .app {
     display: flex;
-    height: 90%;
+    height: 97%;
     width: 100%;
-    border: 0.1em solid var(--color_foreground);
-    border-top-left-radius: 1em;
 }
 
 footer {
     float: right;
     height: 5%;
     width: 100%;
+    padding-right: 1em;
 }
 
 #surface {
@@ -125,13 +133,23 @@ footer {
 
 .ui {
     height: 100%;
-    min-width: 25em;
-    max-width: 35em;
+    min-width: 18em;
+    max-width: 18em;
     width: 30%;
-    border-right: 0.1em solid var(--color_foreground);
+    margin: 1em;
+    padding: 1em;
+    background-color: rgba(40, 40, 75, 0.6);
     overflow-y: auto;
 }
 
+.header-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: start;
+    width: 100%;
+    padding-right: 1em; 
+    padding-left: 1em;
+}
 /*#endregion*/
 
 
@@ -141,25 +159,37 @@ footer {
 /* general */
 
 .ui > div {
-    width: 98%;
-    margin-left: 1%;
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
+    display: flex;
+    flex-flow: column;
+    padding: 0.5em 2.0em 1.0em 2.0em;
 }
 
 .ui > div > h3 {
-    font-size: 1.5em;
+    font-size: 1.2em;
+    font-weight: 800;
+    color: #A4EFF1;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: left;
 }
 
-.ui > div > label {
+.ui > div > div> label {
+    font-size: var(--font_size);
+}
+
+.ui > div > div> span {
     font-size: var(--font_size);
 }
 
 .ui > div > label:hover, .ui > div > h3:hover {
     color: var(--color_accent);
+}
+
+.ui > div > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.1em;
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -168,7 +198,7 @@ footer {
 .ui > div > input[type="range"] {
     accent-color: var(--color_accent);
     float: right;
-    width: 60%;
+    width: 100%;
     /* if we want full control over this: https://codepen.io/ShadowShahriar/pen/zYPPYrQ */
 }
 
