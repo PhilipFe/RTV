@@ -21,7 +21,7 @@ struct Parameters {
 const MAX_RAY_LENGTH = 10.0;
 
 const COLOR_NEAR = vec3<f32>(1.0, 1.0, 1.0);
-const COLOR_FAR = vec3<f32>(0.2, 0.2, 0.6);
+const COLOR_FAR = vec3<f32>(0.15, 0.15, 0.8);
 
 //--------------------------------------------------------------------------------------------------------------------
 
@@ -57,7 +57,6 @@ struct RayPoint {
     steps: f32,
     distance: f32
 };
-
 fn ray_marching(ray_origin: vec3<f32>, ray_dir: vec3<f32>) -> RayPoint {
     var d = mandelbulb_sdf(ray_origin);
     var pos = ray_origin + ray_dir * d;

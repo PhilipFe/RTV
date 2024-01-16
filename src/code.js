@@ -124,7 +124,6 @@ function update() {
     }
 
     adapt();
-
     reset_mouse_accumulation();
     update_uniforms();
 }
@@ -169,16 +168,7 @@ function init() {
     reset_mouse_accumulation();
     
     // events
-    surface.addEventListener('resize', surface_resized);
-    surface.addEventListener('mousemove', surface_mousemove);
-    surface.addEventListener('mousedown', surface_mousedown);
-    document.addEventListener('keydown', keydown);
-    document.addEventListener('keyup', keyup);
-    range_scale.addEventListener('input', on_scale_changed);
-    range_epsilon.addEventListener('input', on_parameters_changed);
-    range_max_iterations.addEventListener('input', on_parameters_changed);
-    range_power.addEventListener('input', on_parameters_changed);
-    range_bailout.addEventListener('input', on_parameters_changed);
+    init_events();
     
     // webgpu
     setup_uniforms();
@@ -296,17 +286,21 @@ async function init_webgpu() {
 //#region events
 //----------------------------------------------------------------------------------------------------------------------
 
-function on_scale_changed() {
-    camera.scale = parseFloat(range_scale.value);
+function init_events() {
+    surface.addEventListener('resize', surface_resized);
+    surface.addEventListener('mousemove', surface_mousemove);
+    surface.addEventListener('mousedown', surface_mousedown);
+    document.addEventListener('keydown', keydown);
+    document.addEventListener('keyup', keyup);
+    
+    range_scale.addEventListener('input', on_scale_changed);
+    range_epsilon.addEventListener('input', on_epsilon_changed);
+    range_max_iterations.addEventListener('input', on_max_iter_changed);
+    range_power.addEventListener('input', on_power_changed);
+    range_bailout.addEventListener('input', on_bailout_changed);
+
+    update_parameter_tooltips();
 }
-
-function on_parameters_changed() {
-    adapt();
-
-    // update visualization
-    //renderVisualization(/*update Data*/)
-}
-
 
 function surface_resized() {
     const devicePixelRatio = window.devicePixelRatio || 1;
@@ -345,6 +339,37 @@ function surface_mousedown() {
             currentSection = null;
         }
     }
+}
+
+
+function on_scale_changed() {
+    camera.scale = parseFloat(range_scale.value);
+    range_scale.setAttribute('title', camera.scale);
+}
+
+
+function on_epsilon_changed() {
+    range_epsilon.setAttribute('title', epsilon);
+}
+
+function on_max_iter_changed() {
+    range_max_iterations.setAttribute('title', max_iter);
+}
+
+function on_power_changed() {
+    range_power.setAttribute('title', power);
+}
+
+function on_bailout_changed() {
+    range_bailout.setAttribute('title', bailout);
+}
+
+function update_parameter_tooltips() {
+    range_scale.setAttribute('title', camera.scale);
+    range_epsilon.setAttribute('title', epsilon);
+    range_max_iterations.setAttribute('title', max_iter);
+    range_power.setAttribute('title', power);
+    range_bailout.setAttribute('title', bailout);
 }
 
 
@@ -481,8 +506,9 @@ function ray_marching(ray_origin, ray_dir) {
         steps++;
     }
 
-    return isNaN(distance) ? 0.0000001 : distance;
+    return (isNaN(distance) || distance <= 0) ? 0.0000001 : distance;
 }
+
 
 function adapt() {
     // distance to fractal surface
@@ -490,7 +516,7 @@ function adapt() {
     
     // parameters (manually tweaked)
     camera.scale = Math.max(1.0 / MAX_SCALE, Math.pow(1.0 / distance, 1.2) * (1.0 / (parseFloat(range_scale.value) + 0.0000001)));
-    epsilon = MIN_EPSILON + Math.pow(distance, 0.9) * 10 * (parseFloat(1.0 - range_epsilon.value) * 0.0001);
+    epsilon = MIN_EPSILON + Math.max(Math.pow(distance, 0.9) * 15 * (parseFloat(1.0 - range_epsilon.value) * 0.0001), 0);
     max_iter = Math.min(MAX_ITER, MIN_ITER + Math.log10(2.0 / distance) * 7 * parseFloat(range_max_iterations.value));
 
     power = MIN_POWER + (MAX_POWER - MIN_POWER - 1) * parseFloat(range_power.value);
@@ -498,6 +524,8 @@ function adapt() {
     
     // notify parameters changed
     state_parameters = 1;
+
+    update_parameter_tooltips();
 }
 
 //----------------------------------------------------------------------------------------------------------------------
