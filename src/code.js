@@ -694,7 +694,7 @@ function adapt() {
     epsilon = MIN_EPSILON + Math.max(Math.pow(distance, 0.9) * 15 * (parseFloat(1.0 - range_epsilon.value) * 0.0001), 0);
     max_iter = Math.min(MAX_ITER, MIN_ITER + Math.log10(2.0 / distance) * 7 * parseFloat(range_max_iterations.value));
 
-    power = MIN_POWER + (MAX_POWER - MIN_POWER - 1) * parseFloat(range_power.value);
+    power = parseInt(MIN_POWER + (MAX_POWER - MIN_POWER - 1) * parseFloat(range_power.value));
     bailout = MIN_BAILOUT + (MAX_BAILOUT - MIN_BAILOUT) * parseFloat(range_bailout.value);
     
     // notify parameters changed
