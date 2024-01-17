@@ -11,6 +11,8 @@ class Camera {
     #znear = 0.1;
     #zfar = 25;
 
+    #max_distance = 3;
+
     // world space coordinate system
     #world_right     = vec3.create(1, 0, 0);
     #world_forward   = vec3.create(0, 1, 0);
@@ -73,6 +75,10 @@ class Camera {
         if (input['KeyC']) {
             vec3.addScaled(this.#pos, this.#up, -movespeed, this.#pos);
         }
+        
+        if(vec3.length(this.#pos) > this.#max_distance) {
+            vec3.mulScalar(vec3.normalize(this.#pos), this.#max_distance, this.#pos);
+        }
 
         // rotation
         this.#rot[2] += input['x'] * this.#sens;
@@ -97,7 +103,9 @@ class Camera {
     }
 
     setPosition(x, y, z) {
-        this.#pos = vec3.create(x, y, z);
+        this.#pos[0] = x;
+        this.#pos[1] = y;
+        this.#pos[2] = z;
         this.#reconstruct();
     }
 

@@ -62,7 +62,22 @@ let state_parameters = 1; // 0 - default | 1 - changed | 2 - awaiting upload to 
 let input = {};
 let camera;
 
-let MAX_RAY_LENGTH = 200.0;
+// parameters
+let MAX_RAY_LENGTH = 10.0;
+let MAX_SCALE = 1;
+let MAX_ITER = 128;
+let MAX_POWER = 16;
+let MAX_BAILOUT = 10;
+
+let MIN_EPSILON = 0.0000001;
+let MIN_ITER = 5;
+let MIN_POWER = 1;
+let MIN_BAILOUT = 1.25;
+
+let epsilon = 0.001;
+let max_iter = 5.0;
+let power = 12.0;
+let bailout = 1.25;
 
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
@@ -114,7 +129,6 @@ function update() {
     }
 
     adapt();
-
     reset_mouse_accumulation();
     update_uniforms();
 }
@@ -164,16 +178,7 @@ function init() {
     reset_mouse_accumulation();
     
     // events
-    surface.addEventListener('resize', surface_resized);
-    surface.addEventListener('mousemove', surface_mousemove);
-    surface.addEventListener('mousedown', surface_mousedown);
-    document.addEventListener('keydown', keydown);
-    document.addEventListener('keyup', keyup);
-    range_scale.addEventListener('input', on_scale_changed);
-    range_epsilon.addEventListener('input', on_parameters_changed);
-    range_max_iterations.addEventListener('input', on_parameters_changed);
-    range_power.addEventListener('input', on_parameters_changed);
-    range_bailout.addEventListener('input', on_parameters_changed);
+    init_events();
     
     // webgpu
     setup_uniforms();
@@ -291,17 +296,21 @@ async function init_webgpu() {
 //#region events
 //----------------------------------------------------------------------------------------------------------------------
 
-function on_scale_changed() {
-    camera.scale = parseFloat(range_scale.value);
+function init_events() {
+    surface.addEventListener('resize', surface_resized);
+    surface.addEventListener('mousemove', surface_mousemove);
+    surface.addEventListener('mousedown', surface_mousedown);
+    document.addEventListener('keydown', keydown);
+    document.addEventListener('keyup', keyup);
+    
+    range_scale.addEventListener('input', on_scale_changed);
+    range_epsilon.addEventListener('input', on_epsilon_changed);
+    range_max_iterations.addEventListener('input', on_max_iter_changed);
+    range_power.addEventListener('input', on_power_changed);
+    range_bailout.addEventListener('input', on_bailout_changed);
+
+    update_parameter_tooltips();
 }
-
-function on_parameters_changed() {
-    state_parameters = 1;
-
-    // update visualization
-    //renderVisualization(/*update Data*/)
-}
-
 
 function surface_resized() {
     const devicePixelRatio = window.devicePixelRatio || 1;
@@ -340,6 +349,37 @@ function surface_mousedown() {
             currentSection = null;
         }
     }
+}
+
+
+function on_scale_changed() {
+    camera.scale = parseFloat(range_scale.value);
+    range_scale.setAttribute('title', camera.scale);
+}
+
+
+function on_epsilon_changed() {
+    range_epsilon.setAttribute('title', epsilon);
+}
+
+function on_max_iter_changed() {
+    range_max_iterations.setAttribute('title', max_iter);
+}
+
+function on_power_changed() {
+    range_power.setAttribute('title', power);
+}
+
+function on_bailout_changed() {
+    range_bailout.setAttribute('title', bailout);
+}
+
+function update_parameter_tooltips() {
+    range_scale_text.textContent = camera.scale;
+    range_epsilon_text.textContent = parseFloat(epsilon).toFixed(7);
+    range_max_iterations_text.textContent = parseFloat(max_iter).toFixed(2);
+    range_power_text.textContent = parseFloat(power).toFixed(2);
+    range_bailout_text.textContent = parseFloat(bailout).toFixed(2);
 }
 
 
@@ -402,13 +442,10 @@ function update_uniforms() {
 
     // parameters
     if(state_parameters == 1) {
-        let e = (parseFloat(range_epsilon.min) + (parseFloat(range_epsilon.max) - parseFloat(range_epsilon.value))) / 10;
-        e = Math.max(e * e * e, 0.0000001); // catch float32 machine precision
-
-        uniforms_parameters[0] = e;
-        uniforms_parameters[1] = parseFloat(range_max_iterations.value);
-        uniforms_parameters[2] = parseFloat(range_power.value);
-        uniforms_parameters[3] = parseFloat(range_bailout.value);
+        uniforms_parameters[0] = parseFloat(epsilon);
+        uniforms_parameters[1] = parseFloat(max_iter);
+        uniforms_parameters[2] = parseFloat(power);
+        uniforms_parameters[3] = parseFloat(bailout);
         state_parameters = 2;
     }
 }
@@ -479,31 +516,26 @@ function ray_marching(ray_origin, ray_dir) {
         steps++;
     }
 
-    return distance;
+    return (isNaN(distance) || distance <= 0) ? 0.0000001 : distance;
 }
+
 
 function adapt() {
     // distance to fractal surface
     var distance = ray_marching(Float32Array.from(camera.position()), Float32Array.from(camera.forward()));
     
-    // scale (movement speed / fractal size)
-    range_scale.value = Math.pow(1.0 / distance, 1.2);
-    range_scale_text.textContent = range_scale.value;
-    on_scale_changed();
+    // parameters (manually tweaked)
+    camera.scale = Math.max(1.0 / MAX_SCALE, Math.pow(1.0 / distance, 1.2) * (1.0 / (parseFloat(range_scale.value) + 0.0000001)));
+    epsilon = MIN_EPSILON + Math.max(Math.pow(distance, 0.9) * 15 * (parseFloat(1.0 - range_epsilon.value) * 0.0001), 0);
+    max_iter = Math.min(MAX_ITER, MIN_ITER + Math.log10(2.0 / distance) * 7 * parseFloat(range_max_iterations.value));
 
-    // details
-    range_epsilon.value = range_epsilon.max - Math.pow(distance, 0.8) * 15;
-    console.log('range_epsilon.value:', range_epsilon.value);
-    range_epsilon_text.textContent = parseFloat(range_epsilon.value).toFixed(7);
+    power = MIN_POWER + (MAX_POWER - MIN_POWER - 1) * parseFloat(range_power.value);
+    bailout = MIN_BAILOUT + (MAX_BAILOUT - MIN_BAILOUT) * parseFloat(range_bailout.value);
     
-    // depth
-    range_max_iterations.value = parseFloat(range_max_iterations.min) * 2 + Math.log10(2.0 / distance) * 7;
-    range_max_iterations_text.textContent = range_max_iterations.value;
+    // notify parameters changed
+    state_parameters = 1;
 
-    range_power_text.textContent = uniforms_parameters[2];
-    range_bailout_text.textContent = uniforms_parameters[3];
-
-    on_parameters_changed();
+    update_parameter_tooltips();
 }
 
 //----------------------------------------------------------------------------------------------------------------------

@@ -27,10 +27,10 @@
             
             <div>
                 <div>
-                    <label for="range_scale">scale:</label>
+                    <label for="range_scale">speed:</label>
                     <span id="range_scale_value">1</span>
                 </div>
-                <input type="range" id="range_scale" min="0.25" max="10000" step="0.25" value="1">
+                <input type="range" id="range_scale" min="0" max="1" step="0.01" value="0.5">
             </div>
             
             <div>
@@ -38,28 +38,28 @@
                     <label for="range_epsilon">epsilon:</label>
                     <span id="range_epsilon_value">0.001</span>
                 </div>
-                <input type="range" id="range_epsilon" min="0.001" max="1" step="0.001" value="0.001">
+                <input type="range" id="range_epsilon" min="0" max="1" step="0.01" value="0.1">
             </div>
             <div>
                 <div>
                     <label for="range_max_iterations">max iterations:</label>
                     <span id="range_max_iterations_value">5</span>
                 </div>
-                <input type="range" id="range_max_iterations" min="2" max="32" step="1" value="5">
+                <input type="range" id="range_max_iterations" min="0" max="1" step="0.01" value="0.1">
             </div>
             <div>
                 <div>
                     <label for="range_power">power:</label>
                     <span id="range_power_value">12</span>
                 </div>
-                <input type="range" id="range_power" min="1" max="32" step="1" value="12">
+                <input type="range" id="range_power" min="0" max="1" step="0.01" value="0.5">
             </div>
             <div>
                 <div>
                     <label for="range_bailout">bailout:</label>
                     <span id="range_bailout_value">12</span>
                 </div>
-                <input type="range" id="range_bailout" min="0" max="10" step="0.25" value="1.5">
+                <input type="range" id="range_bailout" min="0" max="1" step="0.01" value="0">
             </div>
 
             <!--<div id="visualization"></div>-->

@@ -18,7 +18,10 @@ struct Parameters {
 
 //--------------------------------------------------------------------------------------------------------------------
 
-const MAX_RAY_LENGTH = 200.0;
+const MAX_RAY_LENGTH = 10.0;
+
+const COLOR_NEAR = vec3<f32>(1.0, 1.0, 1.0);
+const COLOR_FAR = vec3<f32>(0.15, 0.15, 0.8);
 
 //--------------------------------------------------------------------------------------------------------------------
 
@@ -57,28 +60,27 @@ struct RayMarchResult {
 fn ray_marching(ray_origin: vec3<f32>, ray_dir: vec3<f32>) -> RayMarchResult {
     var d = mandelbulb_sdf(ray_origin);
     var pos = ray_origin + ray_dir * d;
-    var distance = d;
-    var steps = 1;
+    
+    var result: RayMarchResult;
+    result.distance = d;
+    result.steps = 1;
 
-    while(distance < MAX_RAY_LENGTH && d > param.epsilon) {
+    while(result.distance < MAX_RAY_LENGTH && d > param.epsilon) {
         d = mandelbulb_sdf(pos);
         pos += ray_dir * d;
-        distance += d;
-        steps++;
+        result.distance += d;
+        result.steps += 1;
         
     }
-    var result: RayMarchResult;
-    result.distance = distance;
-    result.steps = f32(steps);
+
     return result;
 }
 
 fn heatmap(steps: f32) -> vec3<f32> {
     let t = steps / param.max_iter;
 
-    //let close_color = vec3<f32>(22.0/255.0, 35.0/255.0, 56.0/255.0);  //(0.68, 0.52, 0.61); //(0.56, 0.39, 0.49);
-    let close_color = vec3<f32>(127.0, 30.0, 93.0)/255.0; //(115.0, 165.0, 168.0)/255.0; 
-    let far_color = vec3<f32>(229.0, 151.0, 77.0)/255.0;  //(1.0, 0.88, 0.61) (254.0/255.0, 240.0/255.0, 154.0/255.0); 
+    let close_color = vec3<f32>(127.0, 30.0, 93.0)/255.0;
+    let far_color = vec3<f32>(229.0, 151.0, 77.0)/255.0; 
 
     return mix(far_color, close_color, t);
 }
@@ -111,6 +113,13 @@ fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
     color = mix(color * ao, heatmap_color, 0.3);
     //color = vec3<f32>(ao);
     return vec4<f32>(color*2.5, 1.0);
+
+    /*// color
+    var ao = p.steps * 0.1;
+    ao = (ao / (ao + 1));
+    let f = clamp(pow(ao, 2), 0, 1);
+    let c = mix(COLOR_NEAR, COLOR_FAR, f);
+    return vec4<f32>(c, 1.0);   */
 }
 
 `
