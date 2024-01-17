@@ -375,7 +375,7 @@ function on_bailout_changed() {
 }
 
 function update_parameter_tooltips() {
-    range_scale_text.textContent = camera.scale;
+    range_scale_text.textContent = parseFloat(camera.scale).toFixed(2);
     range_epsilon_text.textContent = parseFloat(epsilon).toFixed(7);
     range_max_iterations_text.textContent = parseFloat(max_iter).toFixed(2);
     range_power_text.textContent = parseFloat(power).toFixed(2);
