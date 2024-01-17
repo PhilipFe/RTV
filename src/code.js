@@ -387,8 +387,8 @@ function on_bailout_changed() {
 function update_parameter_tooltips() {
     range_scale_text.textContent = parseFloat(camera.scale).toFixed(2);
     range_epsilon_text.textContent = parseFloat(epsilon).toFixed(7);
-    range_max_iterations_text.textContent = parseFloat(max_iter).toFixed(2);
-    range_power_text.textContent = parseFloat(power).toFixed(2);
+    range_max_iterations_text.textContent = parseFloat(max_iter).toFixed(1);
+    range_power_text.textContent = parseFloat(power).toFixed(0);
     range_bailout_text.textContent = parseFloat(bailout).toFixed(2);
 }
 
@@ -399,8 +399,8 @@ function reset_user() {
 
     range_scale.value = 0.5;
     range_epsilon.value = 0.1;
-    range_max_iterations.value = 0.1;
-    range_power.value = 0.5;
+    range_max_iterations.value = 0.5;
+    range_power.value =  11/14;
     range_bailout.value = 0;
 }
 

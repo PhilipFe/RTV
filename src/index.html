@@ -27,7 +27,7 @@
             
             <div>
                 <div>
-                    <label for="range_scale">speed:</label>
+                    <label for="range_scale" title="Controls the speed of camera movement towards the fractal. Speed automatically adjusts for closer proximity to ensure detailed exploration.">speed:</label>
                     <span id="range_scale_value">1</span>
                 </div>
                 <input type="range" id="range_scale" min="0" max="1" step="0.01" value="0.5">
@@ -35,28 +35,28 @@
             
             <div>
                 <div>
-                    <label for="range_epsilon">epsilon:</label>
+                    <label for="range_epsilon" title="Adapts automatically. Determines the level of detail by adjusting the threshold for ray marching precision. Lower values result in finer details.">epsilon:</label>
                     <span id="range_epsilon_value">0.001</span>
                 </div>
                 <input type="range" id="range_epsilon" min="0" max="1" step="0.01" value="0.1">
             </div>
             <div>
                 <div>
-                    <label for="range_max_iterations">max iterations:</label>
+                    <label for="range_max_iterations" title="Adapts automatically. Influences the depth complexity of the fractal. Higher values allow deeper exploration into the fractal structure.">max iterations:</label>
                     <span id="range_max_iterations_value">5</span>
                 </div>
                 <input type="range" id="range_max_iterations" min="0" max="1" step="0.01" value="0.1">
             </div>
             <div>
                 <div>
-                    <label for="range_power">power:</label>
+                    <label for="range_power" title="Alters the fractal's shape and symmetry. Changing this parameter can significantly transform the fractal's appearance.">power:</label>
                     <span id="range_power_value">12</span>
                 </div>
                 <input type="range" id="range_power" min="0" max="1" step="0.01" value="0.5">
             </div>
             <div>
                 <div>
-                    <label for="range_bailout">bailout:</label>
+                    <label for="range_bailout" title="Bailout: Affects the escape condition for fractal iterations. Modifying this parameter can change the depth and detail of the fractal's outer regions.">bailout:</label>
                     <span id="range_bailout_value">12</span>
                 </div>
                 <input type="range" id="range_bailout" min="0" max="1" step="0.01" value="0">
