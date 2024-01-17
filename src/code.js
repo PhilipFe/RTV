@@ -188,7 +188,8 @@ function init() {
     });
 
     // d3 visualization
-    renderVisualization(/*data*/);
+    renderVisualization();
+    renderRecordingState();
 }
 
 // webgpu
@@ -397,6 +398,7 @@ function keydown(e) {
             camera: [],
             parameters: []
         };
+        renderRecordingState();
     }
     
     // stop recording
@@ -412,6 +414,7 @@ function keydown(e) {
         isRecording = false;
         console.log("Recording stopped. Data: ", pathData);
         renderVisualization();
+        renderRecordingState();
     }
 }
 
@@ -544,14 +547,14 @@ function adapt() {
 //#region D3 visualiztion
 //----------------------------------------------------------------------------------------------------------------------
 
+const margin = { top: 40, right: 200, bottom: 40, left: 60 },
+    width = 1100 - margin.left - margin.right,
+    height = 200 - margin.top - margin.bottom;
+
 function renderVisualization() {
     d3.select("#visualization").selectAll("*").remove();
 
     const data = preprocessData();
-
-    const margin = { top: 20, right: 20, bottom: 40, left: 60 },
-        width = 1000 - margin.left - margin.right,
-        height = 200 - margin.top - margin.bottom;
 
     const svg = d3.select("#visualization")
         .append("svg")
@@ -630,14 +633,13 @@ function renderVisualization() {
 
     })
 
-
     // hover text
     const bisect = d3.bisector(function(d) {return d.x;}).left;
 
     const focus = svg.append("g")
         .append("circle")
         .style("fill", "none")
-        .attr("stroke", "black")
+        .attr("stroke", "#E5974D")
         .attr("r", 8.5)
         .style("opacity", 0);
 
@@ -699,8 +701,39 @@ function renderVisualization() {
         .on("click", function(event, d) {
             jumpTo(d);
         });
+}
 
-    
+function renderRecordingState() {
+    const svg = d3.select("#visualization").select("svg");
+
+    svg.select("#recording-state").remove();
+
+    const state = svg.select("g").append("g")
+        .attr("id", "recording-state")
+        .attr("transform", `translate(${width + margin.right/2}, ${height + margin.bottom - 120})`);
+
+    state.append("circle")
+        .attr("r", 15)
+        .attr("stroke", "white")
+        .attr("fill", isRecording ? "#CD2693" : "none");
+
+    const text = state.append("text")
+        .attr("text-anchor", "middle")
+        //.attr("aligment-baseline", "middle")
+        .html("")
+            .attr("x", 0)
+            .attr("y", 50)
+            .style("font-size", "12px")
+            .attr("fill", "white")
+            .style("opacity", 1)
+            .append("tspan")
+                .text("press 'R'")
+                .attr("x", 0)
+                .attr("dy", 0)
+            .append("tspan")
+                .text(isRecording ? "to stop" : "to record")
+                .attr("x", 0)
+                .attr("dy", "1.2em")
 }
 
 function preprocessData() {
