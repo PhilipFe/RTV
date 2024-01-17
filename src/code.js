@@ -28,6 +28,7 @@ let range_power;
 let range_power_text;
 let range_bailout;
 let range_bailout_text;
+let button_reset;
 
 // vis data
 // pathData is an array of sections, each section representing a continuous movement period
@@ -158,17 +159,7 @@ function draw() {
 
 function init() {
     // ui
-    surface = document.getElementById('surface');
-    range_scale = document.getElementById('range_scale');
-    range_scale_text = document.getElementById('range_scale_value');
-    range_epsilon = document.getElementById('range_epsilon');
-    range_epsilon_text = document.getElementById('range_epsilon_value');
-    range_max_iterations = document.getElementById('range_max_iterations');
-    range_max_iterations_text = document.getElementById('range_max_iterations_value');
-    range_power = document.getElementById('range_power');
-    range_power_text = document.getElementById('range_power_value');
-    range_bailout = document.getElementById('range_bailout');
-    range_bailout_text = document.getElementById('range_bailout_value');
+    init_ui();
 
     // aux
     ts = performance.now();
@@ -181,6 +172,7 @@ function init() {
     init_events();
     
     // webgpu
+    reset_user();
     setup_uniforms();
     surface_resized();
     init_webgpu().then(() => {
@@ -293,8 +285,23 @@ async function init_webgpu() {
 //----------------------------------------------------------------------------------------------------------------------
 //#endregion
 
-//#region events
+//#region ui & events
 //----------------------------------------------------------------------------------------------------------------------
+
+function init_ui() {
+    surface = document.getElementById('surface');
+    range_scale = document.getElementById('range_scale');
+    range_scale_text = document.getElementById('range_scale_value');
+    range_epsilon = document.getElementById('range_epsilon');
+    range_epsilon_text = document.getElementById('range_epsilon_value');
+    range_max_iterations = document.getElementById('range_max_iterations');
+    range_max_iterations_text = document.getElementById('range_max_iterations_value');
+    range_power = document.getElementById('range_power');
+    range_power_text = document.getElementById('range_power_value');
+    range_bailout = document.getElementById('range_bailout');
+    range_bailout_text = document.getElementById('range_bailout_value');
+    button_reset = document.getElementById('button_reset');
+}
 
 function init_events() {
     surface.addEventListener('resize', surface_resized);
@@ -308,6 +315,8 @@ function init_events() {
     range_max_iterations.addEventListener('input', on_max_iter_changed);
     range_power.addEventListener('input', on_power_changed);
     range_bailout.addEventListener('input', on_bailout_changed);
+
+    button_reset.addEventListener('click', reset_user);
 
     update_parameter_tooltips();
 }
@@ -380,6 +389,18 @@ function update_parameter_tooltips() {
     range_max_iterations_text.textContent = parseFloat(max_iter).toFixed(2);
     range_power_text.textContent = parseFloat(power).toFixed(2);
     range_bailout_text.textContent = parseFloat(bailout).toFixed(2);
+}
+
+
+function reset_user() {
+    camera.setPosition(0, -3, 0);
+    camera.setRotation(-90, 180);
+
+    range_scale.value = 0.5;
+    range_epsilon.value = 0.1;
+    range_max_iterations.value = 0.1;
+    range_power.value = 0.5;
+    range_bailout.value = 0;
 }
 
 
