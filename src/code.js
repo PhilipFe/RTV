@@ -595,7 +595,7 @@ function renderVisualization() {
     svg.append("text")
         .attr("text-anchor", "end")
         .attr("x", width)
-        .attr("y", height + margin.top + 20)
+        .attr("y", height + margin.top)
         .text("time (s)")
         .attr("fill", "#EEEEEE");
     
@@ -612,7 +612,7 @@ function renderVisualization() {
         .attr("text-anchor", "end")
         .attr("transform", "rotate(-90)")
         .attr("y", -margin.left + 20)
-        .attr("x", -margin.top)
+        .attr("x", -margin.top + 50)
         .text("Distance to Fractal")
         .attr("fill", "#EEEEEE");
 
