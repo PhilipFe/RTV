@@ -94,12 +94,12 @@ fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
     let result = ray_marching(rayOrigin, rayDir);
 
     if(result.distance > MAX_RAY_LENGTH) {
-        return vec4<f32>(vec3<f32>(0.0, 0.0, 20.0)/255.0, 1); //(0.0, 0.0, 112.0)
+        return vec4<f32>(vec3<f32>(0.0, 0.0, 20.0)/255.0, 1); 
     }
 
     // cheap AO
-    var ao = result.steps * 0.025;         // more steps ~= more occlusion 
-    ao = 1.0 - (ao / (ao + 1.0));   // normalize to [0, 1] | invert (since less occlusion -> higher intensity)
+    var ao = result.steps * 0.025;          // more steps ~= more occlusion 
+    ao = 1.0 - (ao / (ao + 1.0));           // normalize to [0, 1] | invert (since less occlusion -> higher intensity)
 
     // color
     let heatmap_color = heatmap(result.steps);
