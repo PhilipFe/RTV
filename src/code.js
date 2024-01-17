@@ -832,11 +832,11 @@ function renderVisualization() {
                 .attr("x", textX)
                 .attr("dy", 0)
             .append("tspan")
-                .text("max iter: " + d.max_iter)
+                .text("max iter: " + Number(d.max_iter).toFixed(2))
                 .attr("x", textX)
                 .attr("dy", "1.2em")
             .append("tspan")
-                .text("power: " + d.power)
+                .text("power: " + Number(d.power).toFixed(0))
                 .attr("x", textX)
                 .attr("dy", "1.2em");
     };
