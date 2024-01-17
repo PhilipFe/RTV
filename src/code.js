@@ -518,8 +518,8 @@ function renderVisualization() {
     const data = preprocessData();
 
     const margin = { top: 20, right: 20, bottom: 40, left: 60 },
-        width = 500 - margin.left - margin.right,
-        height = 300 - margin.top - margin.bottom;
+        width = 1000 - margin.left - margin.right,
+        height = 200 - margin.top - margin.bottom;
 
     const svg = d3.select("#visualization")
         .append("svg")
