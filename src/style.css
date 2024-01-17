@@ -287,7 +287,7 @@ footer {
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* color picker */
 
-.ui > div > input[type="color"] {
+.ui > div > div > input[type="color"] {
 	appearance: none;
     border-color: var(--color_foreground);
     border-top-width: 1px;
@@ -295,10 +295,10 @@ footer {
     border-left-width: 0px;
     border-right-width: 0px;
 }
-.ui > div > input[type="color"]::-webkit-color-swatch-wrapper {
+.ui > div > div > input[type="color"]::-webkit-color-swatch-wrapper {
 	padding: 0;
 }
-.ui > div > input[type="color"]::-webkit-color-swatch {
+.ui > div > div > input[type="color"]::-webkit-color-swatch {
 	border: none;
 }
 
