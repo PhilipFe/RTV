@@ -1,32 +1,54 @@
 //#region vars
 //----------------------------------------------------------------------------------------------------------------------
 
-// webgpu
+// WebGPU variables
+/** @type {GPUAdapter} WebGPU Adapter */
 let adapter;
+/** @type {GPUDevice} WebGPU Device */
 let device;
+/** @type {GPUCanvasContext} WebGPU Canvas Context */
 let context;
+/** @type {GPUTextureFormat} Swap chain format for WebGPU */
 let swapchain_format;
 
+/** @type {GPURenderPassDescriptor} Render pass descriptor for WebGPU */
 let renderpass_descriptor;
+/** @type {GPURenderPipeline} Pipeline for rendering */
 let pipeline;
+/** @type {GPUBuffer} Uniform buffer for camera */
 let uniforms_camera_buffer;
+/** @type {GPUBuffer} Uniform buffer for parameters */
 let uniforms_parameters_buffer;
+/** @type {GPUBindGroup} Pipeline bind group */
 let pipeline_bindgroup;
 
+/** @type {Float32Array} Uniform data for camera */
 let uniforms_camera;
+/** @type {Float32Array} Uniform data for parameters */
 let uniforms_parameters;
 
-// ui
+// UI variables
+/** @type {HTMLCanvasElement} Surface for rendering */
 let surface;
+/** @type {HTMLInputElement}*/
 let range_scale;
+/** @type {HTMLInputElement}*/
 let range_scale_text;
+/** @type {HTMLInputElement}*/
 let range_epsilon;
+/** @type {HTMLInputElement}*/
 let range_epsilon_text;
+/** @type {HTMLInputElement}*/
 let range_max_iterations;
+/** @type {HTMLInputElement}*/
 let range_max_iterations_text;
+/** @type {HTMLInputElement}*/
 let range_power;
+/** @type {HTMLInputElement}*/
 let range_power_text;
+/** @type {HTMLInputElement}*/
 let range_bailout;
+/** @type {HTMLInputElement}*/
 let range_bailout_text;
 
 let color_near;
@@ -34,54 +56,79 @@ let color_far;
 let button_reset;
 
 
-// vis data
-// pathData is an array of sections, each section representing a continuous movement period
-// Each section has the following structure:
-// {
-//   startTime: [timestamp of the start of the section],
-//   endTime: [timestamp of the end of the section],
-//   camera: [{
-//     pos: [x1, y1, z1], // Position of the camera at each second
-//     rot: [pitch, 0, yaw], 
-//     ...
-//   }],
-//   parameters: [
-//     { epsilon: value, max_iter: value, power: value, bailout: value }, // Parameters at each second
-//     ...
-//   ]
-// }
+// Visualization data
+/** pathData is an array of sections, each section representing a continuous movement period
+* Each section has the following structure:
+* {
+*   startTime: [timestamp of the start of the section],
+*   endTime: [timestamp of the end of the section],
+*   camera: [{
+*     pos: [x1, y1, z1], // Position of the camera at each second
+*     rot: [pitch, 0, yaw], 
+*     ...
+*   }],
+*   parameters: [
+*     { epsilon: value, max_iter: value, power: value, bailout: value }, // Parameters at each second
+*     ...
+*   ]
+* }
+*/
 let pathData = [];
+/** @type {boolean} Flag to indicate if recording is active */
 let isRecording = false;
+/** @type {Object} Current section being recorded */
 let currentSection = null;
+/** @type {number} Last recorded time */
 let lastTime = 0;
-const saveTime = 1000; // save data every second
-let = nextStartTime = 0;
+/** @type {number} Interval for saving data (in milliseconds) */
+const saveTime = 1000; 
+/** @type {number} Next start time for a section */
+let nextStartTime = 0;
 
-// aux
+// Auxiliary variables
+/** @type {number} Timestamp for the current frame */
 let ts;
+/** @type {number} Delta time between frames */
 let dt;
+/** @type {boolean} Flag to enable camera updates */
 let camera_enabled = false;
-let state_parameters = 1; // 0 - default | 1 - changed | 2 - awaiting upload to gpu
+/** @type {number} State of parameters (0 - default, 1 - changed, 2 - awaiting upload) */
+let state_parameters = 1;
 
-// other
+// Other variables
+/** @type {Object} Input controls */
 let input = {};
+/** @type {Camera} Camera object */
 let camera;
 
 // parameters
+/** @type {number}*/
 let MAX_RAY_LENGTH = 10.0;
+/** @type {number}*/
 let MAX_SCALE = 1;
+/** @type {number}*/
 let MAX_ITER = 128;
+/** @type {number}*/
 let MAX_POWER = 16;
+/** @type {number}*/
 let MAX_BAILOUT = 10;
 
+/** @type {number}*/
 let MIN_EPSILON = 0.0000001;
+/** @type {number}*/
 let MIN_ITER = 5;
+/** @type {number}*/
 let MIN_POWER = 1;
+/** @type {number}*/
 let MIN_BAILOUT = 1.25;
 
+/** @type {number}*/
 let epsilon = 0.0026175;
+/** @type {number}*/
 let max_iter = 4.99;
+/** @type {number}*/
 let power = 8.0;
+/** @type {number}*/
 let bailout = 1.25;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -90,7 +137,9 @@ let bailout = 1.25;
 //#region main
 //----------------------------------------------------------------------------------------------------------------------
 
-// mainloop
+/**
+ * Main loop function which updates and renders each frame.
+ */
 function run() {
     let now = performance.now();
     dt = (now - ts)/1000;
@@ -102,7 +151,9 @@ function run() {
     requestAnimationFrame(run);
 }
 
-// logic
+/**
+ * Updates the logic for each frame, including camera and input processing.
+ */
 function update() {
     // input
     if(camera_enabled) {
@@ -138,7 +189,9 @@ function update() {
     update_uniforms();
 }
 
-// graphics
+/**
+ * Handles the rendering of each frame, updating GPU resources and executing the render pass.
+ */
 function draw() {
     // uniforms | cpu -> gpu
     upload_uniforms();
@@ -161,6 +214,9 @@ function draw() {
 //#region init
 //----------------------------------------------------------------------------------------------------------------------
 
+/**
+ * Initializes the application. Sets up UI, events, WebGPU, and D3 visualization.
+ */
 function init() {
     // ui
     init_ui();
@@ -188,7 +244,10 @@ function init() {
     renderRecordingState();
 }
 
-// webgpu
+/**
+ * Initializes WebGPU components including device, context, pipeline, and uniforms.
+ * @returns {Promise<void>} A promise that resolves when WebGPU is fully initialized.
+ */
 async function init_webgpu() {
     adapter = await navigator.gpu.requestAdapter();
     device = await adapter.requestDevice();
@@ -293,6 +352,9 @@ async function init_webgpu() {
 //#region ui & events
 //----------------------------------------------------------------------------------------------------------------------
 
+/**
+ * Initializes UI elements by querying and storing references to DOM elements.
+ */
 function init_ui() {
     surface = document.getElementById('surface');
     range_scale = document.getElementById('range_scale');
@@ -311,6 +373,9 @@ function init_ui() {
     button_reset = document.getElementById('button_reset');
 }
 
+/**
+ * Sets up event listeners for UI interactions and other user inputs.
+ */
 function init_events() {
     surface.addEventListener('resize', surface_resized);
     surface.addEventListener('mousemove', surface_mousemove);
@@ -329,6 +394,10 @@ function init_events() {
     update_parameter_tooltips();
 }
 
+/**
+ * Handles the resize event for the surface.
+ * Updates the dimensions of the rendering surface and the camera aspect ratio.
+ */
 function surface_resized() {
     const devicePixelRatio = window.devicePixelRatio || 1;
     surface.width = surface.clientWidth * devicePixelRatio;
@@ -336,11 +405,19 @@ function surface_resized() {
     camera.resized(surface.width, surface.height);
 }
 
+/**
+ * Handles mouse movement over the surface.
+ * @param {MouseEvent} e - The mouse event object.
+ */
 function surface_mousemove(e) {
     input['x'] += e.movementX;
     input['y'] += e.movementY;
 }
 
+/**
+ * Handles mouse button press on the surface.
+ * Toggles camera control and manages recording state.
+ */
 function surface_mousedown() {
     camera_enabled = !camera_enabled;
     if(camera_enabled) {
@@ -361,14 +438,16 @@ function surface_mousedown() {
         // save recorded section
         if (isRecording && currentSection) {
             pathData.push(currentSection);
-            //console.log("Section Recorded: ", currentSection);
             nextStartTime = currentSection.endTime;
             currentSection = null;
         }
     }
 }
 
-
+/**
+ * Handles changes to the scale range input.
+ * Updates the camera scale and UI tooltip.
+ */
 function on_scale_changed() {
     camera.scale = parseFloat(range_scale.value);
     range_scale.setAttribute('title', camera.scale);
@@ -391,6 +470,9 @@ function on_bailout_changed() {
     range_bailout.setAttribute('title', bailout);
 }
 
+/**
+ * Updates the text content of UI text to reflect current parameter values.
+ */
 function update_parameter_tooltips() {
     range_scale_text.textContent = parseFloat(camera.scale).toFixed(2);
     range_epsilon_text.textContent = parseFloat(epsilon).toFixed(7);
@@ -399,7 +481,10 @@ function update_parameter_tooltips() {
     range_bailout_text.textContent = parseFloat(bailout).toFixed(2);
 }
 
-
+/**
+ * Resets the user settings to default values.
+ * Resets camera position, rotation, and UI elements to their default states.
+ */
 function reset_user() {
     camera.setPosition(0, -3, 0);
     camera.setRotation(-90, 180);
@@ -414,7 +499,11 @@ function reset_user() {
     color_far.value = "#e5974d"; 
 }
 
-
+/**
+ * Handles keydown events for the document.
+ * Manages recording state and other key-based interactions.
+ * @param {KeyboardEvent} e - The keyboard event object.
+ */
 function keydown(e) {
     input[e.code] = true;
 
@@ -422,7 +511,6 @@ function keydown(e) {
     if(e.code === "KeyR" && !isRecording) {
         isRecording = true;
         pathData = [];
-        console.log("Recording started");
         currentSection = {
             startTime: 0,
             endTime: 0,
@@ -438,17 +526,20 @@ function keydown(e) {
         // push last data
         if(currentSection) {
             pathData.push(currentSection);
-            //console.log("Section Recorded: ", currentSection);
             currentSection = null;
         }
         
         isRecording = false;
-        console.log("Recording stopped. Data: ", pathData);
         renderVisualization();
         renderRecordingState();
     }
 }
 
+/**
+ * Handles keyup events for the document.
+ * Updates the input state based on the released key.
+ * @param {KeyboardEvent} e - The keyboard event object.
+ */
 function keyup(e) {
     input[e.code] = false;
 }
@@ -459,6 +550,11 @@ function keyup(e) {
 //#region aux
 //----------------------------------------------------------------------------------------------------------------------
 
+/**
+ * Converts a hex color string to an RGB object.
+ * @param {string} hex - The hex color string.
+ * @returns {{r: number, g: number, b: number} | null} RGB color object or null if invalid.
+ */
 function hexToRgb(hex) {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -468,14 +564,18 @@ function hexToRgb(hex) {
     } : null;
 }
 
-// uniforms
-
+/**
+ * Sets up uniform buffers for camera and parameters.
+ */
 function setup_uniforms() {
     uniforms_camera = new Float32Array(16); 
     uniforms_parameters = new Float32Array(12);
     update_uniforms();
 }
 
+/**
+ * Updates the uniform buffers with current camera and parameter data.
+ */
 function update_uniforms() {
     // camera
     uniforms_camera.set(camera.position(), 0);
@@ -500,6 +600,9 @@ function update_uniforms() {
     }
 }
 
+/**
+ * Uploads the updated uniforms to the GPU.
+ */
 function upload_uniforms() {
     device.queue.writeBuffer(uniforms_camera_buffer, 0, uniforms_camera);
     if(state_parameters == 2) {
@@ -508,16 +611,20 @@ function upload_uniforms() {
     }
 }
 
-// mouse
-
+/**
+ * Resets mouse movement accumulation.
+ */
 function reset_mouse_accumulation() {
     input['x'] = 0;
     input['y'] = 0;
 }
 
 
-// adaptive parameters
-
+/**
+ * Computes the Signed Distance Function (SDF) for the Mandelbulb fractal at a given position.
+ * @param {Float32Array} pos - The position to compute the SDF at.
+ * @returns {number} The computed distance.
+ */
 function mandelbulb_sdf(pos) {
     var z = Float32Array.from(pos);
     var dr = 1.0; // derivative
@@ -551,6 +658,12 @@ function mandelbulb_sdf(pos) {
     return 0.5 * Math.log(r) * r / dr;    
 }
 
+/**
+ * Performs ray marching to compute the distance from a ray origin to the Mandelbulb fractal surface.
+ * @param {Float32Array} ray_origin - The origin of the ray.
+ * @param {Float32Array} ray_dir - The direction of the ray.
+ * @returns {number} The distance from the ray origin to the fractal surface.
+ */
 function ray_marching(ray_origin, ray_dir) {
     var d = mandelbulb_sdf(ray_origin);
     var pos = vec3.add(ray_origin, vec3.mulScalar(ray_dir, d));
@@ -569,7 +682,9 @@ function ray_marching(ray_origin, ray_dir) {
     return (isNaN(distance) || distance <= 0) ? 0.0000001 : distance;
 }
 
-
+/**
+ * Adapts camera and rendering parameters based on the distance to the fractal surface.
+ */
 function adapt() {
     // distance to fractal surface
     var distance = ray_marching(Float32Array.from(camera.position()), Float32Array.from(camera.forward()));
@@ -593,10 +708,14 @@ function adapt() {
 //#region D3 visualiztion
 //----------------------------------------------------------------------------------------------------------------------
 
+// Margins and dimensions for the D3 visualization
 const margin = { top: 40, right: 200, bottom: 40, left: 60 },
     width = 1100 - margin.left - margin.right,
     height = 200 - margin.top - margin.bottom;
 
+/**
+ * Renders the visualization using D3.
+ */
 function renderVisualization() {
     d3.select("#visualization").selectAll("*").remove();
 
@@ -749,6 +868,9 @@ function renderVisualization() {
         });
 }
 
+/**
+ * Renders the state of recording in the visualization.
+ */
 function renderRecordingState() {
     const svg = d3.select("#visualization").select("svg");
 
@@ -782,6 +904,10 @@ function renderRecordingState() {
                 .attr("dy", "1.2em")
 }
 
+/**
+ * Preprocesses data for D3 visualization.
+ * @returns {Array} The preprocessed data array.
+ */
 function preprocessData() {
     let data = [];
     let time = 0;
@@ -807,6 +933,10 @@ function preprocessData() {
     return data;
 }
 
+/**
+ * Adjusts camera and rendering parameters based on the selected data point.
+ * @param {Object} data - Data point containing the parameters to jump to.
+ */
 function jumpTo(data) {
 
     camera.setPosition(data.pos[0], data.pos[1], data.pos[2]);
@@ -818,10 +948,20 @@ function jumpTo(data) {
     uniforms_parameters[3] = data.bailout;
 }
 
+/**
+ * Calculates the distance to the fractal bulb.
+ * @param {Array} pos - Position array [x, y, z].
+ * @returns {number} The calculated distance.
+ */
 function distanceToBulb(pos) {
     return Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
 }
 
+/**
+ * Determines the line spacing for the D3 visualization based on epsilon.
+ * @param {number} epsilon - The epsilon value used for line spacing.
+ * @returns {string} The dash array string for SVG path.
+ */
 function lineSpacing(epsilon) {
     if(epsilon >= 0.001) return "1, 0"; // solid line
     
