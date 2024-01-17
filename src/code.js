@@ -2,33 +2,69 @@
 //----------------------------------------------------------------------------------------------------------------------
 
 // WebGPU variables
-/** @type {GPUAdapter} WebGPU Adapter */
+/** 
+ * WebGPU Adapter 
+ * @type {GPUAdapter} 
+ * */
 let adapter;
-/** @type {GPUDevice} WebGPU Device */
+/** 
+ * WebGPU Device 
+ * @type {GPUDevice} 
+ * */
 let device;
-/** @type {GPUCanvasContext} WebGPU Canvas Context */
+/** 
+ * WebGPU Canvas Context 
+ * @type {GPUCanvasContext} 
+ * */
 let context;
-/** @type {GPUTextureFormat} Swap chain format for WebGPU */
+/** 
+ * Swap chain format for WebGPU
+ * @type {GPUTextureFormat} 
+ */
 let swapchain_format;
 
-/** @type {GPURenderPassDescriptor} Render pass descriptor for WebGPU */
+/** 
+ * Render pass descriptor for WebGPU 
+ * @type {GPURenderPassDescriptor} 
+ * */
 let renderpass_descriptor;
-/** @type {GPURenderPipeline} Pipeline for rendering */
+/** 
+ * Pipeline for rendering 
+ * @type {GPURenderPipeline} 
+ * */
 let pipeline;
-/** @type {GPUBuffer} Uniform buffer for camera */
+/** 
+ * Uniform buffer for camera 
+ * @type {GPUBuffer} 
+ * */
 let uniforms_camera_buffer;
-/** @type {GPUBuffer} Uniform buffer for parameters */
+/** 
+ * Uniform buffer for parameters 
+ * @type {GPUBuffer} 
+ * */
 let uniforms_parameters_buffer;
-/** @type {GPUBindGroup} Pipeline bind group */
+/** 
+ * Pipeline bind group 
+ * @type {GPUBindGroup} 
+ * */
 let pipeline_bindgroup;
 
-/** @type {Float32Array} Uniform data for camera */
+/** 
+ * Uniform data for camera 
+ * @type {Float32Array} 
+ * */
 let uniforms_camera;
-/** @type {Float32Array} Uniform data for parameters */
+/** 
+ * Uniform data for parameters 
+ * @type {Float32Array} 
+ * */
 let uniforms_parameters;
 
 // UI variables
-/** @type {HTMLCanvasElement} Surface for rendering */
+/** 
+ * Surface for rendering
+ * @type {HTMLCanvasElement}
+ * */ 
 let surface;
 /** @type {HTMLInputElement}*/
 let range_scale;
@@ -74,31 +110,64 @@ let button_reset;
 * }
 */
 let pathData = [];
-/** @type {boolean} Flag to indicate if recording is active */
+/** 
+ * Flag to indicate if recording is active 
+ * @type {boolean} 
+ * */
 let isRecording = false;
-/** @type {Object} Current section being recorded */
+/** 
+ * Current section being recorded 
+ * @type {Object} 
+ * */
 let currentSection = null;
-/** @type {number} Last recorded time */
+/** 
+ * Last recorded time 
+ * @type {number} 
+ * */
 let lastTime = 0;
-/** @type {number} Interval for saving data (in milliseconds) */
+/** 
+ * Interval for saving data (in milliseconds) 
+ * @type {number} 
+ * */
 const saveTime = 1000; 
-/** @type {number} Next start time for a section */
+/** 
+ * Next start time for a section 
+ * @type {number} 
+ * */
 let nextStartTime = 0;
 
 // Auxiliary variables
-/** @type {number} Timestamp for the current frame */
+/** 
+ * Timestamp for the current frame 
+ * @type {number} 
+ * */
 let ts;
-/** @type {number} Delta time between frames */
+/** 
+ * Delta time between frames 
+ * @type {number} 
+ * */
 let dt;
-/** @type {boolean} Flag to enable camera updates */
+/** 
+ * Flag to enable camera updates 
+ * @type {boolean} 
+ * */
 let camera_enabled = false;
-/** @type {number} State of parameters (0 - default, 1 - changed, 2 - awaiting upload) */
+/** 
+ * State of parameters (0 - default, 1 - changed, 2 - awaiting upload) 
+ * @type {number} 
+ * */
 let state_parameters = 1;
 
 // Other variables
-/** @type {Object} Input controls */
+/** 
+ * Input controls 
+ * @type {Object} 
+ * */
 let input = {};
-/** @type {Camera} Camera object */
+/** 
+ * Camera object 
+ * @type {Camera} 
+ * */
 let camera;
 
 // parameters
