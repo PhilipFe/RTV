@@ -11,6 +11,8 @@ struct Parameters {
     max_iter: f32,
     power: f32,
     bailout: f32,
+    color_near: vec3<f32>,
+    color_far: vec3<f32>
 };
 
 @group(0) @binding(0) var<uniform> camera: Camera;
@@ -19,9 +21,6 @@ struct Parameters {
 //--------------------------------------------------------------------------------------------------------------------
 
 const MAX_RAY_LENGTH = 10.0;
-
-const COLOR_NEAR = vec3<f32>(1.0, 1.0, 1.0);
-const COLOR_FAR = vec3<f32>(0.15, 0.15, 0.8);
 
 //--------------------------------------------------------------------------------------------------------------------
 
@@ -77,12 +76,7 @@ fn ray_marching(ray_origin: vec3<f32>, ray_dir: vec3<f32>) -> RayMarchResult {
 }
 
 fn heatmap(steps: f32) -> vec3<f32> {
-    let t = steps / param.max_iter;
-
-    let close_color = vec3<f32>(127.0, 30.0, 93.0)/255.0;
-    let far_color = vec3<f32>(229.0, 151.0, 77.0)/255.0; 
-
-    return mix(far_color, close_color, t);
+    return mix(param.color_near, param.color_far, 1.0 - steps / param.max_iter);
 }
 
 fn desaturate(color: vec3<f32>, factor: f32) -> vec3<f32> {
@@ -103,23 +97,15 @@ fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
         return vec4<f32>(vec3<f32>(0.0, 0.0, 20.0)/255.0, 1); //(0.0, 0.0, 112.0)
     }
 
-    let heatmap_color = heatmap(result.steps);
-
     // cheap AO
     var ao = result.steps * 0.025;         // more steps ~= more occlusion 
     ao = 1.0 - (ao / (ao + 1.0));   // normalize to [0, 1] | invert (since less occlusion -> higher intensity)
 
+    // color
+    let heatmap_color = heatmap(result.steps);
     var color = desaturate(heatmap_color, 1.0 - ao);
     color = mix(color * ao, heatmap_color, 0.3);
-    //color = vec3<f32>(ao);
     return vec4<f32>(color*2.5, 1.0);
-
-    /*// color
-    var ao = p.steps * 0.1;
-    ao = (ao / (ao + 1));
-    let f = clamp(pow(ao, 2), 0, 1);
-    let c = mix(COLOR_NEAR, COLOR_FAR, f);
-    return vec4<f32>(c, 1.0);   */
 }
 
 `

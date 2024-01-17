@@ -7,6 +7,7 @@
 }
 
 :root {
+    --color_background_ui: rgba(40, 40, 75, 0.6);
     --color_background: #000014;
     --color_foreground: #EEEEEE;
     --color_foreground_inactive: #BBBBBB;
@@ -86,12 +87,9 @@ a {
 }
 
 .space {
-    width: 100%;
-    margin: 0px;
     height: 1px;
     margin: 0em;
     padding: 0em;
-    background: var(--color_background);
     border-top: 0.1em solid var(--color_foreground);
 }
 
@@ -144,7 +142,7 @@ footer {
     width: 30%;
     margin: 1em;
     padding: 1em;
-    background-color: rgba(40, 40, 75, 0.6);
+    background-color: var(--color_background_ui);
     overflow-y: auto;
 }
 
@@ -284,6 +282,24 @@ footer {
     color: var(--color_accent);
     border: 1px solid var(--color_foreground);
     cursor: pointer;
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* color picker */
+
+.ui > div > input[type="color"] {
+	appearance: none;
+    border-color: var(--color_foreground);
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+}
+.ui > div > input[type="color"]::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+.ui > div > input[type="color"]::-webkit-color-swatch {
+	border: none;
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/

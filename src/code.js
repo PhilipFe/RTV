@@ -28,7 +28,11 @@ let range_power;
 let range_power_text;
 let range_bailout;
 let range_bailout_text;
+
+let color_near;
+let color_far;
 let button_reset;
+
 
 // vis data
 // pathData is an array of sections, each section representing a continuous movement period
@@ -75,9 +79,9 @@ let MIN_ITER = 5;
 let MIN_POWER = 1;
 let MIN_BAILOUT = 1.25;
 
-let epsilon = 0.001;
-let max_iter = 5.0;
-let power = 12.0;
+let epsilon = 0.0026175;
+let max_iter = 4.99;
+let power = 8.0;
 let bailout = 1.25;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -301,6 +305,9 @@ function init_ui() {
     range_power_text = document.getElementById('range_power_value');
     range_bailout = document.getElementById('range_bailout');
     range_bailout_text = document.getElementById('range_bailout_value');
+
+    color_near = document.getElementById('color_near');
+    color_far = document.getElementById('color_far');
     button_reset = document.getElementById('button_reset');
 }
 
@@ -402,6 +409,9 @@ function reset_user() {
     range_max_iterations.value = 0.5;
     range_power.value =  11/14;
     range_bailout.value = 0;
+
+    color_near.value = "#7f1e5d"; 
+    color_far.value = "#e5974d"; 
 }
 
 
@@ -449,11 +459,20 @@ function keyup(e) {
 //#region aux
 //----------------------------------------------------------------------------------------------------------------------
 
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
 // uniforms
 
 function setup_uniforms() {
     uniforms_camera = new Float32Array(16); 
-    uniforms_parameters = new Float32Array(4);
+    uniforms_parameters = new Float32Array(12);
     update_uniforms();
 }
 
@@ -470,6 +489,13 @@ function update_uniforms() {
         uniforms_parameters[1] = parseFloat(max_iter);
         uniforms_parameters[2] = parseFloat(power);
         uniforms_parameters[3] = parseFloat(bailout);
+
+        let nearColorHex = hexToRgb(color_near.value);
+        let farColorHex = hexToRgb(color_far.value);
+        let nearColor = vec3.fromValues(nearColorHex.r/255, nearColorHex.g/255, nearColorHex.b/255);
+        let farColor = vec3.fromValues(farColorHex.r/255, farColorHex.g/255, farColorHex.b/255);
+        uniforms_parameters.set(nearColor, 4);
+        uniforms_parameters.set(farColor, 8);
         state_parameters = 2;
     }
 }
@@ -558,7 +584,6 @@ function adapt() {
     
     // notify parameters changed
     state_parameters = 1;
-
     update_parameter_tooltips();
 }
 
