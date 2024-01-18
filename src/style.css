@@ -209,7 +209,6 @@ footer {
     accent-color: var(--color_accent);
     float: right;
     width: 100%;
-    /* if we want full control over this: https://codepen.io/ShadowShahriar/pen/zYPPYrQ */
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -234,7 +233,6 @@ footer {
 .ui > div > select > option {
     text-align: center;
     font-size: var(--font_size);
-    /* hover color seems really hard to change since this elements are rendered by the OS. webdev is such a shitshow .. */
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/

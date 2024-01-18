@@ -7,43 +7,43 @@ class Camera {
     /** 
      * mouse sensitivity
      * @type {number} 
-     * */
+     */
     #sens = 0.05;
 
     /** 
      * movement speed
      * @type {number} 
-     * */
+     */
     #speed = 2.0;
     
     /** 
      * movement speed modifier (sprint speed)
      * @type {number} 
-     * */
+     */
     #speed_mod = 3.0;
 
     /** 
      * field of view
      * @type {number} 
-     * */
+     */
     #fov = 74.34;
 
     /** 
      * near plane
      * @type {number} 
-     * */
+     */
     #znear = 0.1;
 
     /** 
      * far plane
      * @type {number} 
-     * */
+     */
     #zfar = 25;
 
     /** 
      * maximal distance to the origin (bounding sphere to restrict movement)
      * @type {number} 
-     * */
+     */
     #max_distance = 3;
 
     // world space coordinate system
@@ -51,19 +51,19 @@ class Camera {
     /** 
      * world right vector
      * @type {number} 
-     * */
+     */
     #world_right     = vec3.create(1, 0, 0);
 
     /** 
      * world forward vector
      * @type {number} 
-     * */
+     */
     #world_forward   = vec3.create(0, 1, 0);
 
     /** 
      * world up vector
      * @type {number} 
-     * */
+     */
     #world_up        = vec3.create(0, 0, 1);
     
     // view space coordinate system
@@ -71,19 +71,19 @@ class Camera {
     /** 
      * camera coordinate system right vector
      * @type {number} 
-     * */
+     */
     #right;
 
     /** 
      * camera coordinate system up vector
      * @type {number} 
-     * */
+     */
     #up;
     
     /** 
      * camera coordinate system forward vector
      * @type {number} 
-     * */
+     */
     #forward;
     
     // world space coordinates
@@ -91,19 +91,19 @@ class Camera {
     /** 
      * camera position
      * @type {number} 
-     * */
+     */
     #pos;
 
     /** 
      * camera rotation
      * @type {number} 
-     * */
+     */
     #rot;
 
     /** 
      * camera scale
      * @type {number} 
-     * */
+     */
     scale;
 
     // matrices
@@ -111,19 +111,19 @@ class Camera {
     /** 
      * perspective matrix
      * @type {number} 
-     * */
+     */
     #p;
 
     /** 
      * view matrix
      * @type {number} 
-     * */
+     */
     #v;
 
     /** 
      * cached view-projection matrix
      * @type {number} 
-     * */
+     */
     #pv;
 
     //------------------------------------------------------------------------------------------------------------------
@@ -260,7 +260,7 @@ class Camera {
      * Calculates the view matrix and the camera coordinate system using position and rotation of the camera
      */
     #reconstruct() {
-        // view matrix (fuck lookat: https://stannum.io/blog/0UaG8R)
+        // view matrix
         mat4.identity(this.#v);
         mat4.rotate(this.#v, this.#world_right, degToRad(-this.#rot[0]), this.#v);
         mat4.rotate(this.#v, this.#world_up, degToRad(-this.#rot[2]), this.#v);

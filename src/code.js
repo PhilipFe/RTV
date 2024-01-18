@@ -5,17 +5,17 @@
 /** 
  * WebGPU Adapter 
  * @type {GPUAdapter} 
- * */
+ */
 let adapter;
 /** 
  * WebGPU Device 
  * @type {GPUDevice} 
- * */
+ */
 let device;
 /** 
  * WebGPU Canvas Context 
  * @type {GPUCanvasContext} 
- * */
+ */
 let context;
 /** 
  * Swap chain format for WebGPU
@@ -26,45 +26,45 @@ let swapchain_format;
 /** 
  * Render pass descriptor for WebGPU 
  * @type {GPURenderPassDescriptor} 
- * */
+ */
 let renderpass_descriptor;
 /** 
  * Pipeline for rendering 
  * @type {GPURenderPipeline} 
- * */
+ */
 let pipeline;
 /** 
  * Uniform buffer for camera 
  * @type {GPUBuffer} 
- * */
+ */
 let uniforms_camera_buffer;
 /** 
  * Uniform buffer for parameters 
  * @type {GPUBuffer} 
- * */
+ */
 let uniforms_parameters_buffer;
 /** 
  * Pipeline bind group 
  * @type {GPUBindGroup} 
- * */
+ */
 let pipeline_bindgroup;
 
 /** 
  * Uniform data for camera 
  * @type {Float32Array} 
- * */
+ */
 let uniforms_camera;
 /** 
  * Uniform data for parameters 
  * @type {Float32Array} 
- * */
+ */
 let uniforms_parameters;
 
 // UI variables
 /** 
  * Surface for rendering
  * @type {HTMLCanvasElement}
- * */ 
+ */ 
 let surface;
 /** @type {HTMLInputElement}*/
 let range_scale;
@@ -113,61 +113,61 @@ let pathData = [];
 /** 
  * Flag to indicate if recording is active 
  * @type {boolean} 
- * */
+ */
 let isRecording = false;
 /** 
  * Current section being recorded 
  * @type {Object} 
- * */
+ */
 let currentSection = null;
 /** 
  * Last recorded time 
  * @type {number} 
- * */
+ */
 let lastTime = 0;
 /** 
  * Interval for saving data (in milliseconds) 
  * @type {number} 
- * */
+ */
 const saveTime = 1000; 
 /** 
  * Next start time for a section 
  * @type {number} 
- * */
+ */
 let nextStartTime = 0;
 
 // Auxiliary variables
 /** 
  * Timestamp for the current frame 
  * @type {number} 
- * */
+ */
 let ts;
 /** 
  * Delta time between frames 
  * @type {number} 
- * */
+ */
 let dt;
 /** 
  * Flag to enable camera updates 
  * @type {boolean} 
- * */
+ */
 let camera_enabled = false;
 /** 
  * State of parameters (0 - default, 1 - changed, 2 - awaiting upload) 
  * @type {number} 
- * */
+ */
 let state_parameters = 1;
 
 // Other variables
 /** 
  * Input controls 
  * @type {Object} 
- * */
+ */
 let input = {};
 /** 
  * Camera object 
  * @type {Camera} 
- * */
+ */
 let camera;
 
 // parameters
@@ -543,8 +543,8 @@ function on_bailout_changed() {
  * Updates the text content of UI text to reflect current parameter values.
  */
 function update_parameter_tooltips() {
-    range_scale_text.textContent = parseFloat(camera.scale).toFixed(2);
-    range_epsilon_text.textContent = parseFloat(epsilon).toFixed(7);
+    range_scale_text.textContent = parseFloat(1.0 / camera.scale).toFixed(7);
+    range_epsilon_text.textContent = parseFloat(1.0 / epsilon).toFixed(0);
     range_max_iterations_text.textContent = parseFloat(max_iter).toFixed(1);
     range_power_text.textContent = parseFloat(power).toFixed(0);
     range_bailout_text.textContent = parseFloat(bailout).toFixed(2);
@@ -741,7 +741,7 @@ function ray_marching(ray_origin, ray_dir) {
 
     var epsilon = uniforms_parameters[0];
 
-    while(steps < 10 && d > epsilon) {
+    while(distance < MAX_RAY_LENGTH && d > epsilon) {
         d = mandelbulb_sdf(pos);
         vec3.add(pos, vec3.mulScalar(ray_dir, d), pos);
         distance += d;
