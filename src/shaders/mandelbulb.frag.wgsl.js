@@ -22,6 +22,8 @@ struct Parameters {
 
 const MAX_RAY_LENGTH = 10.0;
 
+const COLOR_BG = vec4<f32>(0, 0, 0.078431, 1);
+
 //--------------------------------------------------------------------------------------------------------------------
 
 fn mandelbulb_sdf(pos: vec3<f32>) -> f32 {
@@ -80,7 +82,7 @@ fn heatmap(steps: f32) -> vec3<f32> {
 }
 
 fn desaturate(color: vec3<f32>, factor: f32) -> vec3<f32> {
-    let gray = dot(color, vec3<f32>(0.3, 0.33, 0.33));
+    let gray = dot(color, vec3<f32>(0.33, 0.33, 0.33));
     return mix(color, vec3(gray), 0.5);
 }
 
@@ -94,7 +96,7 @@ fn main(@location(0) uv : vec2<f32>) -> @location(0) vec4<f32> {
     let result = ray_marching(rayOrigin, rayDir);
 
     if(result.distance > MAX_RAY_LENGTH) {
-        return vec4<f32>(vec3<f32>(0.0, 0.0, 20.0)/255.0, 1); 
+        return COLOR_BG;
     }
 
     // cheap AO

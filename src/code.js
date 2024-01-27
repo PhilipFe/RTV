@@ -741,7 +741,7 @@ function ray_marching(ray_origin, ray_dir) {
 
     var epsilon = uniforms_parameters[0];
 
-    while(distance < MAX_RAY_LENGTH && d > epsilon) {
+    while(distance < MAX_RAY_LENGTH && d > epsilon && steps < 10) {
         d = mandelbulb_sdf(pos);
         vec3.add(pos, vec3.mulScalar(ray_dir, d), pos);
         distance += d;
